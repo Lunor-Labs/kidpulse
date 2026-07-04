@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { ProductService } from '../ProductService';
+import { productListQuerySchema } from '../../types/productQuery';
 
 const row = {
   id: 'p1',
@@ -26,7 +27,7 @@ describe('ProductService.getProducts', () => {
   it('converts Decimal prices to numbers', async () => {
     const repo = { findMany: jest.fn().mockResolvedValue([row]) };
     const service = new ProductService(repo as never);
-    const result = await service.getProducts({ limit: 12 });
+    const result = await service.getProducts(productListQuerySchema.parse({}));
     expect(result[0].price).toBe(2500);
     expect(result[0].compareAtPrice).toBe(12690);
   });
