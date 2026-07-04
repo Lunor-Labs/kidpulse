@@ -8,13 +8,14 @@
     "start": "node dist/server.js",
     "test": "jest --runInBand",
     "seed": "tsx prisma/seed.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:db:setup": "docker exec supabase_db_kidpulse psql -U postgres -c 'CREATE DATABASE kidpulse_test' || true && DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/kidpulse_test npx prisma migrate deploy"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^6.19.3",
     "@supabase/supabase-js": "^2.109.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -33,7 +34,7 @@
     "@types/supertest": "^7.2.0",
     "jest": "^30.4.2",
     "pino-pretty": "^13.1.3",
-    "prisma": "^7.8.0",
+    "prisma": "^6.19.3",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.11",
     "tsx": "^4.23.0",
