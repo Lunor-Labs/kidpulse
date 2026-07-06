@@ -2,13 +2,20 @@ import Link from 'next/link';
 
 export function AnnouncementBar() {
   return (
-    <div className="bg-brand-indigo px-4 py-2 text-center text-xs font-medium text-white sm:text-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-center gap-6">
-        <span>🚚 Free delivery on orders over Rs. 5,000</span>
-        <span className="hidden items-center gap-4 sm:flex">
-          <Link href="/track-order" className="hover:text-brand-gold">Track Order</Link>
-          <Link href="/help" className="hover:text-brand-gold">Help Center</Link>
-        </span>
+    <div className="hidden min-[601px]:flex items-center justify-between bg-brand-indigo-deep px-8 py-[7px] text-[0.78rem] text-white/75">
+      <div className="flex items-center gap-5">
+        <span className="flex items-center gap-1.5">🚚 Free delivery on orders over Rs. 5,000</span>
+      </div>
+      <div className="flex items-center gap-4">
+        <Link href="/track-order" className="transition-colors hover:text-white">
+          Track Order
+        </Link>
+        <Link href="/help" className="transition-colors hover:text-white">
+          Help Center
+        </Link>
+        <Link href="#" className="transition-colors hover:text-white">
+          🇱🇰 Sri Lanka
+        </Link>
       </div>
     </div>
   );
