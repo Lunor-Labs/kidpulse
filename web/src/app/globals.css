@@ -26,3 +26,17 @@ body {
   background-color: var(--color-brand-paper);
   color: var(--color-brand-ink);
 }
+
+/* Hero animations */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(1.5); }
+}
+
+.animate-floaty          { animation: floaty 4s ease-in-out infinite; }
+.animate-floaty-delayed  { animation: floaty 4s ease-in-out 1.2s infinite; }
+.animate-pulse-dot       { animation: pulse-dot 1.6s ease-in-out infinite; }
