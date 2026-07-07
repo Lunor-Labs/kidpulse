@@ -21,7 +21,7 @@ const TESTIMONIALS = [
 
 export function Testimonials() {
   return (
-    <section className="mx-auto max-w-7xl px-8 pb-[60px]">
+    <section className="mx-auto max-w-7xl px-5 pb-[60px] sm:px-8">
 
       {/* Section header — centered */}
       <div className="mb-[30px] flex flex-col items-center text-center">

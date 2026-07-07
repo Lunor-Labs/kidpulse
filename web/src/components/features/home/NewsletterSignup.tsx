@@ -13,9 +13,9 @@ export function NewsletterSignup() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-8 pb-[60px]">
+    <div className="mx-auto max-w-7xl px-5 pb-[60px] sm:px-8">
       <div
-        className="relative overflow-hidden rounded-[24px] flex items-center justify-between gap-8 px-12 py-11"
+        className="relative overflow-hidden rounded-[24px] flex flex-col items-start gap-6 px-6 py-9 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-12 sm:py-11"
         style={{ background: 'linear-gradient(120deg, #ed3f7f, #ff6a9e)' }}
       >
         {/* Decorative white circle bottom-left */}
@@ -37,7 +37,7 @@ export function NewsletterSignup() {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="relative z-10 flex shrink-0 gap-[10px]"
+          className="relative z-10 flex w-full flex-col gap-[10px] sm:w-auto sm:shrink-0 sm:flex-row"
         >
           <input
             type="email"
@@ -46,7 +46,7 @@ export function NewsletterSignup() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             aria-label="Email address"
-            className="w-[240px] rounded-[12px] border-none bg-white px-[18px] py-[13px] text-[0.88rem] text-brand-ink outline-none placeholder:text-brand-ink-soft/60"
+            className="w-full rounded-[12px] border-none bg-white px-[18px] py-[13px] text-[0.88rem] text-brand-ink outline-none placeholder:text-brand-ink-soft/60 sm:w-[240px]"
           />
           <button
             type="submit"

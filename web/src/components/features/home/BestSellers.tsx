@@ -96,7 +96,7 @@ export async function BestSellers() {
   if (products.length === 0) products = FALLBACK_PRODUCTS;
 
   return (
-    <section className="mx-auto max-w-7xl px-8 py-0 pb-[60px]">
+    <section className="mx-auto max-w-7xl px-5 py-0 pb-[60px] sm:px-8">
 
       {/* Section header */}
       <div className="mb-[30px] flex items-end justify-between flex-wrap gap-3">

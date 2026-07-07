@@ -79,7 +79,7 @@ export async function CategoryCards() {
   if (categories.length === 0) categories = FALLBACK_CATEGORIES;
 
   return (
-    <section className="mx-auto max-w-7xl px-8 py-8">
+    <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
       <div className="grid grid-cols-2 gap-[18px] lg:grid-cols-4">
         {categories.map((c) => {
           const comingSoon = c.productCount === 0;

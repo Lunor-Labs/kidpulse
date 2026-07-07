@@ -49,12 +49,10 @@ export function SiteFooter() {
     <footer className="bg-brand-indigo-deep mt-[60px]">
 
       {/* Top grid */}
-      <div className="mx-auto max-w-7xl px-8 pb-9 pt-14 grid gap-8"
-        style={{ gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr' }}
-      >
+      <div className="mx-auto max-w-7xl px-5 pb-9 pt-14 grid gap-8 grid-cols-2 sm:px-8 md:[grid-template-columns:1.4fr_1fr_1fr_1fr_1fr]">
 
         {/* Brand column */}
-        <div>
+        <div className="col-span-2 md:col-span-1">
           <span className="mb-[14px] block font-display text-[1.5rem] font-normal text-brand-sky">
             KidPulse
           </span>
@@ -102,7 +100,7 @@ export function SiteFooter() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-8 py-5 flex items-center justify-between flex-wrap gap-3 text-[0.78rem] text-white/45">
+        <div className="mx-auto max-w-7xl px-5 py-5 flex items-center justify-between flex-wrap gap-3 text-[0.78rem] text-white/45 sm:px-8">
           <span>© {new Date().getFullYear()} KidPulse. All rights reserved.</span>
           <div className="flex gap-4">
             <span>🔒 Secure Checkout</span>
