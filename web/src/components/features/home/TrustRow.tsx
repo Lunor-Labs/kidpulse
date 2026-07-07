@@ -6,8 +6,8 @@ export function TrustRow() {
     ];
   
     return (
-      <div className="bg-white px-8 pb-3 pt-6">
-        <div className="mx-auto max-w-7xl rounded-[18px] bg-brand-indigo-deep px-6 py-4 flex justify-center items-center gap-12 flex-wrap">
+      <div className="bg-white px-5 pb-3 pt-6 sm:px-8">
+        <div className="mx-auto max-w-7xl rounded-[18px] bg-brand-indigo-deep px-6 py-4 flex justify-center items-center gap-6 flex-wrap sm:gap-12">
           {items.map((item) => (
             <div key={item} className="flex items-center gap-2 text-[0.84rem] font-bold text-white/90">
               <svg

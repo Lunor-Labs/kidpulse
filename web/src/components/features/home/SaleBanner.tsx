@@ -2,9 +2,9 @@ import Link from 'next/link';
 
 export function SaleBanner() {
   return (
-    <div className="mx-auto max-w-7xl px-8 mb-[60px]">
+    <div className="mx-auto max-w-7xl px-5 mb-[60px] sm:px-8">
       <div
-        className="relative overflow-hidden rounded-[24px] flex items-center justify-between px-10 py-9 gap-4"
+        className="relative overflow-hidden rounded-[24px] flex flex-col items-start gap-5 px-6 py-8 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-10 sm:py-9"
         style={{
           background: 'linear-gradient(120deg, #1b0b80, #2c1aa0)',
         }}

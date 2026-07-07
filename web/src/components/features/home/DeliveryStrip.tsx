@@ -7,8 +7,8 @@ const items = [
   
   export function DeliveryStrip() {
     return (
-      <div className="bg-white px-8 pb-6 pt-2">
-        <div className="mx-auto max-w-7xl rounded-[18px] bg-brand-indigo p-6 grid grid-cols-4 gap-3">
+      <div className="bg-white px-5 pb-6 pt-2 sm:px-8">
+        <div className="mx-auto max-w-7xl rounded-[18px] bg-brand-indigo p-4 sm:p-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {items.map(({ icon, label, color }) => (
             <div
               key={label}

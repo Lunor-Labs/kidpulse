@@ -18,7 +18,7 @@ export function Hero() {
       />
 
       {/* ── Main two-column grid ── */}
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-8 md:grid-cols-2">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-5 sm:px-8 md:grid-cols-2">
 
         {/* LEFT — Copy */}
         <div className="py-6">
@@ -44,7 +44,7 @@ export function Hero() {
         </div>
 
         {/* RIGHT — Art */}
-        <div className="relative flex h-[440px] items-end justify-center">
+        <div className="relative flex h-[340px] items-end justify-center sm:h-[440px]">
 
           {/* Blob behind image */}
           <div
@@ -63,16 +63,16 @@ export function Hero() {
             width={420}
             height={420}
             priority
-            className="relative z-10 h-[420px] w-auto drop-shadow-[0_18px_30px_rgba(27,11,128,0.18)]"
+            className="relative z-10 h-[300px] w-auto max-w-full object-contain drop-shadow-[0_18px_30px_rgba(27,11,128,0.18)] sm:h-[420px]"
           />
 
           {/* Floating badge — top left */}
-          <div className="animate-floaty absolute left-[-2%] top-[8%] z-20 flex items-center gap-2 rounded-2xl bg-white px-4 py-[10px] text-[0.82rem] font-bold text-brand-indigo shadow-[0_10px_24px_rgba(27,11,128,0.14)]">
+          <div className="animate-floaty absolute left-1 top-[8%] z-20 flex items-center gap-2 rounded-2xl bg-white px-4 py-[10px] text-[0.82rem] font-bold text-brand-indigo shadow-[0_10px_24px_rgba(27,11,128,0.14)] sm:left-[-2%]">
             <span className="text-xl">🎨</span> New kit weekly
           </div>
 
           {/* Floating badge — bottom right */}
-          <div className="animate-floaty-delayed absolute bottom-[14%] right-[-4%] z-20 flex items-center gap-2 rounded-2xl bg-white px-4 py-[10px] text-[0.82rem] font-bold text-brand-indigo shadow-[0_10px_24px_rgba(27,11,128,0.14)]">
+          <div className="animate-floaty-delayed absolute bottom-[14%] right-1 z-20 flex items-center gap-2 rounded-2xl bg-white px-4 py-[10px] text-[0.82rem] font-bold text-brand-indigo shadow-[0_10px_24px_rgba(27,11,128,0.14)] sm:right-[-4%]">
             <span className="text-xl">⭐</span> 386 5-star reviews
           </div>
         </div>
