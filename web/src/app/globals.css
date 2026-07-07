@@ -20,6 +20,7 @@
 @theme inline {
   --font-sans: var(--font-fredoka), sans-serif;
   --font-display: var(--font-baloo), cursive;
+  --font-chewy: var(--font-chewy), cursive;
 }
 
 body {
