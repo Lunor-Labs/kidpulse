@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Baloo_2, Fredoka } from 'next/font/google';
+import { Baloo_2, Fredoka, Chewy } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 
 const baloo = Baloo_2({ subsets: ['latin'], variable: '--font-baloo', display: 'swap' });
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-fredoka', display: 'swap' });
-
+const chewy = Chewy({ subsets: ['latin'], variable: '--font-chewy', weight: '400', display: 'swap' });
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
   title: { default: 'KidPulse — Craft Kits for Kids', template: '%s | KidPulse' },
