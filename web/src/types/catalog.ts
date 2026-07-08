@@ -15,6 +15,17 @@ export interface ProductImage {
   sortOrder: number;
 }
 
+export interface Variant {
+  id: string;
+  label: string;
+  ageRangeMin: number | null;
+  ageRangeMax: number | null;
+  price: number;
+  compareAtPrice: number | null;
+  stockQuantity: number;
+  sku: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -30,4 +41,5 @@ export interface Product {
   isBestSeller: boolean;
   category: { id: string; name: string; slug: string };
   images: ProductImage[];
+  variants: Variant[];
 }

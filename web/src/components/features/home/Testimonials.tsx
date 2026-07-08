@@ -25,10 +25,10 @@ export function Testimonials() {
 
       {/* Section header — centered */}
       <div className="mb-[30px] flex flex-col items-center text-center">
-        <span className="mb-[6px] block font-display text-[0.95rem] font-normal tracking-[0.04em] text-brand-berry">
+        <span className="mb-[6px] block font-chewy text-[0.95rem] font-normal tracking-[0.04em] text-brand-berry">
           5,000+ happy parents
         </span>
-        <h2 className="font-display text-[2.1rem] font-normal text-brand-indigo">
+        <h2 className="font-chewy text-[2.1rem] font-normal text-brand-indigo">
           What Parents Say
         </h2>
       </div>
