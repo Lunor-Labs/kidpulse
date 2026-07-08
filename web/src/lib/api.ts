@@ -23,3 +23,13 @@ export function getCategories(): Promise<Category[]> {
 export function getBestSellers(): Promise<Product[]> {
   return apiGet<Product[]>('/api/v1/products?bestseller=true&limit=8');
 }
+
+export function getProductBySlug(slug: string): Promise<Product> {
+  return apiGet<Product>(`/api/v1/products/${slug}`);
+}
+
+export function getRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {
+  return apiGet<Product[]>(
+    `/api/v1/products?category=${categorySlug}&exclude=${excludeSlug}&limit=4`
+  );
+}

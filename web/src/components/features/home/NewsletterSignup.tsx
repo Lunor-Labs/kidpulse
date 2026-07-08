@@ -26,7 +26,7 @@ export function NewsletterSignup() {
 
         {/* Text */}
         <div className="relative z-10">
-          <h3 className="font-display text-[1.6rem] font-normal text-white mb-[6px]">
+          <h3 className="font-chewy text-[1.6rem] font-normal text-white mb-[6px]">
             Get 10% off your first order
           </h3>
           <p className="text-[0.9rem] text-white/85">

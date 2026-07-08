@@ -101,10 +101,10 @@ export async function BestSellers() {
       {/* Section header */}
       <div className="mb-[30px] flex items-end justify-between flex-wrap gap-3">
         <div>
-          <span className="mb-[6px] block font-display text-[0.95rem] font-normal tracking-[0.04em] text-brand-berry">
+          <span className="mb-[6px] block font-chewy text-[0.95rem] font-normal tracking-[0.04em] text-brand-berry">
             Loved by families
           </span>
-          <h2 className="font-display text-[2.1rem] font-normal text-brand-indigo">
+          <h2 className="font-chewy text-[2.1rem] font-normal text-brand-indigo">
             Best Selling Products
           </h2>
         </div>
