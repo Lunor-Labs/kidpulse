@@ -53,7 +53,7 @@ export function SiteFooter() {
 
         {/* Brand column */}
         <div className="col-span-2 md:col-span-1">
-          <span className="mb-[14px] block font-display text-[1.5rem] font-normal text-brand-sky">
+          <span className="mb-[14px] block font-chewy text-[1.5rem] font-normal text-brand-sky">
             KidPulse
           </span>
           <p className="mb-[18px] text-[0.85rem] leading-relaxed text-white/55">
@@ -79,7 +79,7 @@ export function SiteFooter() {
         {/* Link columns */}
         {COLUMNS.map((col) => (
           <nav key={col.heading} aria-label={col.heading}>
-            <h4 className="mb-4 font-display text-[1rem] font-normal text-white">
+            <h4 className="mb-4 font-chewy text-[1rem] font-normal text-white">
               {col.heading}
             </h4>
             <ul className="space-y-[10px]">

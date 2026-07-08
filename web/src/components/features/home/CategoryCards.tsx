@@ -115,7 +115,7 @@ export async function CategoryCards() {
 
               {/* Content */}
               <div className="relative z-10 flex flex-col p-5">
-                <h3 className="mb-1 font-display text-[1.25rem] font-normal text-white drop-shadow-sm">
+                <h3 className="mb-1 font-chewy text-[1.25rem] font-normal text-white drop-shadow-sm">
                   {c.name}
                 </h3>
                 <p className="mb-3 text-[0.8rem] font-semibold text-white/75">

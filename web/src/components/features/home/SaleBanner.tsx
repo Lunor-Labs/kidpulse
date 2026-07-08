@@ -21,7 +21,7 @@ export function SaleBanner() {
           <span className="mb-2 block text-[0.78rem] font-bold uppercase tracking-[0.08em] text-brand-gold">
             Limited time
           </span>
-          <h3 className="font-display text-[1.7rem] font-normal text-white mb-[6px]">
+          <h3 className="font-chewy text-[1.7rem] font-normal text-white mb-[6px]">
             Character Painting Kits — up to 82% off
           </h3>
           <p className="text-[0.92rem] text-white/75">
