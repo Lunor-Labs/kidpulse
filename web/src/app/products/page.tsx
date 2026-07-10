@@ -8,6 +8,7 @@ interface ProductsPageProps {
     minAge?: string;
     maxAge?: string;
     sort?: string;
+    q?: string;
   }>;
 }
 
@@ -33,6 +34,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         initialMinAge={params.minAge ? Number(params.minAge) : null}
         initialMaxAge={params.maxAge ? Number(params.maxAge) : null}
         initialSort={params.sort ?? 'featured'}
+        initialQuery={params.q ?? ''}
       />
     </Suspense>
   );
