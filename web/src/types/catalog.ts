@@ -41,5 +41,5 @@ export interface Product {
   isBestSeller: boolean;
   category: { id: string; name: string; slug: string };
   images: ProductImage[];
-  variants: Variant[];
+  variants?: Variant[];
 }
