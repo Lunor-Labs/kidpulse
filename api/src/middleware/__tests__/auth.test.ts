@@ -27,7 +27,23 @@ describe('authenticate', () => {
     const { req, res, next } = mockReqRes(`Bearer ${token}`);
     await authenticate(req, res, next);
     expect(next).toHaveBeenCalledWith();
-    expect(req.user).toEqual({ id: 'user-123', email: 'a@b.lk', role: 'customer' });
+    expect(req.user).toEqual({
+      id: 'user-123',
+      email: 'a@b.lk',
+      fullName: null,
+      role: 'customer',
+    });
+  });
+
+  it('reads full name from user_metadata', async () => {
+    const token = await makeToken({
+      email: 'a@b.lk',
+      user_metadata: { full_name: 'Amaya Perera' },
+    });
+    const { req, res, next } = mockReqRes(`Bearer ${token}`);
+    await authenticate(req, res, next);
+    expect(next).toHaveBeenCalledWith();
+    expect(req.user?.fullName).toBe('Amaya Perera');
   });
 
   it('reads role from app_metadata', async () => {

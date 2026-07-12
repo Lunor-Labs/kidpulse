@@ -37,7 +37,12 @@ body {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.35; transform: scale(1.5); }
 }
+@keyframes hero-fade {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
 .animate-floaty          { animation: floaty 4s ease-in-out infinite; }
 .animate-floaty-delayed  { animation: floaty 4s ease-in-out 1.2s infinite; }
 .animate-pulse-dot       { animation: pulse-dot 1.6s ease-in-out infinite; }
+.animate-hero-fade       { animation: hero-fade 0.5s ease-out; }
