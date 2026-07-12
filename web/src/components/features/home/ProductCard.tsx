@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { AddToCartButton } from '@/components/features/cart/AddToCartButton';
+import { WishlistButton } from '@/components/features/products/WishlistButton';
 import type { Product } from '@/types/catalog';
 
 const CARD_BG: Record<string, string> = {
@@ -35,6 +36,13 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function formatAgeRange(min: number | null, max: number | null): string | null {
+  if (min == null && max == null) return null;
+  if (min != null && max != null) return `Ages ${min}–${max}`;
+  if (min != null) return `Ages ${min}+`;
+  return `Ages up to ${max}`;
+}
+
 export function ProductCard({ product }: { product: Product }) {
   const image = product.images[0];
   const slug  = product.category.slug;
@@ -43,6 +51,9 @@ export function ProductCard({ product }: { product: Product }) {
   const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
   const pct = hasDiscount ? discountPercent(product.price, product.compareAtPrice!) : null;
   const isNew = !hasDiscount && product.isFeatured;
+  const outOfStock = product.stockQuantity <= 0;
+  const lowStock =
+    !outOfStock && product.stockQuantity <= (product.lowStockAlert ?? 5);
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-[18px] border border-brand-line bg-white transition-[box-shadow,transform] duration-200 hover:-translate-y-[3px] hover:shadow-[0_16px_32px_rgba(27,11,128,0.12)]">
@@ -80,22 +91,36 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
 
-          {/* Wishlist button — stopPropagation so it doesn't trigger Link */}
-          <button
-            aria-label="Add to wishlist"
-            onClick={(e) => e.preventDefault()}
-            className="absolute right-[10px] top-[10px] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white/90 text-[0.95rem] text-brand-berry hover:bg-white"
-          >
-            ♡
-          </button>
+          {outOfStock && (
+            <span className="absolute right-[10px] bottom-[10px] rounded-full bg-brand-ink/85 px-[9px] py-1 text-[0.68rem] font-bold text-white">
+              Out of stock
+            </span>
+          )}
+          {lowStock && (
+            <span className="absolute right-[10px] bottom-[10px] rounded-full bg-brand-gold-deep px-[9px] py-1 text-[0.68rem] font-bold text-white">
+              Only {product.stockQuantity} left
+            </span>
+          )}
+
+          <WishlistButton productId={product.id} />
         </div>
 
         {/* Body — name, rating, price */}
         <div className="flex flex-1 flex-col p-[14px] pb-2">
 
-          {/* Category tag */}
-          <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-[0.04em] text-brand-sky-deep">
-            {product.category.name}
+          {/* Category tag + age range */}
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="text-[0.68rem] font-bold uppercase tracking-[0.04em] text-brand-sky-deep">
+              {product.category.name}
+            </span>
+            {(() => {
+              const label = formatAgeRange(product.ageRangeMin, product.ageRangeMax);
+              return label ? (
+                <span className="rounded-full bg-brand-cream px-2 py-[1px] text-[0.66rem] font-semibold text-brand-ink-soft">
+                  {label}
+                </span>
+              ) : null;
+            })()}
           </div>
 
           {/* Product name */}
@@ -105,8 +130,10 @@ export function ProductCard({ product }: { product: Product }) {
 
           {/* Star rating */}
           <div className="mb-2 flex items-center gap-[5px]">
-            <StarRating rating={4.9} />
-            <span className="text-[0.74rem] text-brand-ink-soft">(386)</span>
+            <StarRating rating={product.avgRating ?? 5} />
+            <span className="text-[0.74rem] text-brand-ink-soft">
+              ({product.reviewCount ?? 0})
+            </span>
           </div>
 
           {/* Price row */}

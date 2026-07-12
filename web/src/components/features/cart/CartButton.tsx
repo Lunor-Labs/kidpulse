@@ -27,8 +27,8 @@ export function CartButton() {
   const mounted = useHasHydrated();
 
   return (
-    <button
-      type="button"
+    <Link
+      href="/cart"
       aria-label="Shopping cart"
       className="flex items-center gap-[7px] rounded-full bg-brand-gold px-[18px] py-[9px] text-[0.86rem] font-bold text-brand-indigo transition-colors hover:bg-brand-gold-deep"
     >
@@ -37,6 +37,6 @@ export function CartButton() {
       {mounted && count > 0 && (
         <span className="rounded-full bg-brand-berry px-1.5 py-px text-[0.7rem] font-bold text-white">{count}</span>
       )}
-    </button>
+    </Link>
   );
 }
