@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { CartButton } from '@/components/features/cart/CartButton';
+import { HeaderAccountMenu } from './HeaderAccountMenu';
 import { MobileMenu } from './MobileMenu';
 import { SearchBar } from '@/components/features/search/SearchBar';
 
@@ -8,15 +9,6 @@ function WishlistIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-function LoginIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M20 21a8 8 0 10-16 0" />
-      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }
@@ -37,18 +29,17 @@ export function SiteHeader() {
         />
       </Link>
 
-      {/* Search bar with dropdown */}
       <SearchBar />
 
       <div className="ml-auto flex items-center gap-5 text-[0.9rem] font-semibold text-white">
-        <Link href="#" className="flex items-center gap-1.5 transition-colors hover:text-brand-gold">
+        <Link
+          href="/account/wishlist"
+          className="flex items-center gap-1.5 transition-colors hover:text-brand-gold"
+        >
           <WishlistIcon />
           Wishlist
         </Link>
-        <Link href="/login" className="flex items-center gap-1.5 transition-colors hover:text-brand-gold">
-          <LoginIcon />
-          Login
-        </Link>
+        <HeaderAccountMenu />
         <CartButton />
       </div>
     </header>
