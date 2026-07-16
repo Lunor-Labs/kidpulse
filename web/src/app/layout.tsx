@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AnnouncementBar } from '@/components/features/layout/AnnouncementBar';
 import { SiteHeader } from '@/components/features/layout/SiteHeader';
 import { SiteFooter } from '@/components/features/layout/SiteFooter';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import './globals.css';
 
 const baloo = Baloo_2({ subsets: ['latin'], variable: '--font-baloo', display: 'swap' });
@@ -27,11 +28,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${baloo.variable} ${fredoka.variable} ${chewy.variable}`}>
       <body className="font-sans antialiased">
-        <AnnouncementBar />
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
-        <Toaster position="bottom-center" richColors />
+        <AuthProvider>
+          <AnnouncementBar />
+          <SiteHeader />
+          <main>{children}</main>
+          <SiteFooter />
+          <Toaster position="bottom-center" richColors />
+        </AuthProvider>
       </body>
     </html>
   );

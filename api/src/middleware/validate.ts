@@ -13,3 +13,16 @@ export function validateQuery(schema: ZodType) {
     next();
   };
 }
+
+export function validateBody(schema: ZodType) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      const first = result.error.issues[0];
+      next(new AppError(first ? first.message : 'Invalid request body', 400));
+      return;
+    }
+    res.locals.body = result.data;
+    next();
+  };
+}

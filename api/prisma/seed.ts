@@ -22,22 +22,36 @@ const CATEGORIES = [
   { name: 'Learning Toys', slug: 'learning-toys', description: 'Educational toys for ages 3-10', sortOrder: 4 },
 ];
 
+interface SeedVariant {
+  label: string; sku: string; price: number; compareAtPrice: number | null;
+  stockQuantity: number; sortOrder: number;
+}
+
 interface SeedProduct {
   name: string; slug: string; sku: string; description: string;
   price: number; compareAtPrice: number | null;
   ageRangeMin: number; ageRangeMax: number;
   isBestSeller: boolean; categorySlug: string; photo: string;
+  tags?: string[];
+  variants?: SeedVariant[];
 }
 
 const PRODUCTS: SeedProduct[] = [
-  { name: 'DIY 3D Character Painting Kit — 3 Characters', slug: 'character-painting-kit-3', sku: 'KP-PK-003', description: 'Paint-your-own 3D character kit with 3 characters, child-safe paints and brushes included.', price: 2500, compareAtPrice: 12690, ageRangeMin: 3, ageRangeMax: 10, isBestSeller: true, categorySlug: 'painting-kits', photo: '3 char kit.jpeg' },
+  { name: 'DIY 3D Character Painting Kit — 3 Characters', slug: 'character-painting-kit-3', sku: 'KP-PK-003', description: 'Paint-your-own 3D character kit with 3 characters, child-safe paints and brushes included.', price: 2500, compareAtPrice: 12690, ageRangeMin: 3, ageRangeMax: 10, isBestSeller: true, categorySlug: 'painting-kits', photo: '3 char kit.jpeg', tags: ['painting', 'diy', 'creative'], variants: [
+    { label: 'Dinosaur Set', sku: 'KP-PK-003-DINO', price: 2500, compareAtPrice: 12690, stockQuantity: 30, sortOrder: 0 },
+    { label: 'Unicorn Set', sku: 'KP-PK-003-UNI', price: 2700, compareAtPrice: 12690, stockQuantity: 15, sortOrder: 1 },
+    { label: 'Safari Set', sku: 'KP-PK-003-SAF', price: 2500, compareAtPrice: null, stockQuantity: 0, sortOrder: 2 },
+  ] },
   { name: 'DIY 3D Character Painting Kit — 5 Characters', slug: 'character-painting-kit-5', sku: 'KP-PK-005', description: 'Five favourite characters to paint, display and play with. Everything included in the box.', price: 3500, compareAtPrice: 15900, ageRangeMin: 3, ageRangeMax: 10, isBestSeller: true, categorySlug: 'painting-kits', photo: '5 char pack.jpeg' },
   { name: 'DIY 3D Character Painting Kit — 10 Characters', slug: 'character-painting-kit-10', sku: 'KP-PK-010', description: 'The big box: ten characters for parties, siblings or serious little artists.', price: 5900, compareAtPrice: 24500, ageRangeMin: 3, ageRangeMax: 10, isBestSeller: true, categorySlug: 'painting-kits', photo: '10 char kit.jpeg' },
   { name: 'Character Painting Party Pack', slug: 'character-painting-party-pack', sku: 'KP-PK-PTY', description: 'Party-ready multi-pack — keep a whole birthday table busy and proud of what they made.', price: 4800, compareAtPrice: 9600, ageRangeMin: 4, ageRangeMax: 12, isBestSeller: true, categorySlug: 'painting-kits', photo: '5 char packs.jpeg' },
   { name: 'Sea Theme Painting Kit', slug: 'sea-theme-painting-kit', sku: 'KP-PK-SEA', description: 'Under-the-sea characters to paint — a calm, creative afternoon in a box.', price: 3890, compareAtPrice: null, ageRangeMin: 3, ageRangeMax: 8, isBestSeller: false, categorySlug: 'painting-kits', photo: 'Characters.jpg' },
   { name: 'Return Gift Painting Set', slug: 'return-gift-painting-set', sku: 'KP-PK-RGS', description: 'Individually packed mini painting sets — the return gift other parents ask about.', price: 4200, compareAtPrice: null, ageRangeMin: 3, ageRangeMax: 10, isBestSeller: true, categorySlug: 'painting-kits', photo: 'Return Gifts.jpeg' },
   // NOTE: photos for the two STEM products are placeholders until client provides real shots.
-  { name: 'KidPulse STEM Science Kit', slug: 'stem-science-kit', sku: 'KP-ST-SCI', description: 'Hands-on experiments that make science the best part of the day.', price: 5100, compareAtPrice: 8500, ageRangeMin: 6, ageRangeMax: 12, isBestSeller: true, categorySlug: 'stem-kits', photo: 'Packs.jpeg' },
+  { name: 'KidPulse STEM Science Kit', slug: 'stem-science-kit', sku: 'KP-ST-SCI', description: 'Hands-on experiments that make science the best part of the day.', price: 5100, compareAtPrice: 8500, ageRangeMin: 6, ageRangeMax: 12, isBestSeller: true, categorySlug: 'stem-kits', photo: 'Packs.jpeg', tags: ['stem', 'science', 'educational'], variants: [
+    { label: 'Ages 6-8', sku: 'KP-ST-SCI-68', price: 5100, compareAtPrice: 8500, stockQuantity: 25, sortOrder: 0 },
+    { label: 'Ages 9-12', sku: 'KP-ST-SCI-912', price: 5900, compareAtPrice: 9500, stockQuantity: 20, sortOrder: 1 },
+  ] },
   { name: 'Junior Engineer Building Kit', slug: 'junior-engineer-building-kit', sku: 'KP-ST-ENG', description: 'Build, test, rebuild — an open-ended construction kit for young engineers.', price: 6250, compareAtPrice: null, ageRangeMin: 5, ageRangeMax: 10, isBestSeller: false, categorySlug: 'stem-kits', photo: 'Packs.jpeg' },
 ];
 
@@ -56,6 +70,38 @@ async function uploadPhoto(fileName: string, slug: string): Promise<string> {
   return supabase.storage.from(BUCKET).getPublicUrl(key).data.publicUrl;
 }
 
+interface SeedReview {
+  authorName: string;
+  rating: number;
+  title: string;
+  body: string;
+  userId: string;
+}
+
+const REVIEW_TEMPLATES: SeedReview[] = [
+  {
+    authorName: 'Nadeesha P.',
+    userId: 'seed-user-nadeesha',
+    rating: 5,
+    title: 'My daughter is obsessed',
+    body: 'Everything arrived neatly packed. Paints did not stain, and she has been asking to do another kit every weekend.',
+  },
+  {
+    authorName: 'Rashmi F.',
+    userId: 'seed-user-rashmi',
+    rating: 5,
+    title: 'Perfect party activity',
+    body: 'Bought this for a birthday and every child left with something they were proud of. Highly recommend.',
+  },
+  {
+    authorName: 'Ishara D.',
+    userId: 'seed-user-ishara',
+    rating: 4,
+    title: 'Great quality',
+    body: 'Kit was well made and instructions were clear. Would love to see even more character options in future kits.',
+  },
+];
+
 async function main(): Promise<void> {
   await ensureBucket();
 
@@ -69,16 +115,53 @@ async function main(): Promise<void> {
     const url = await uploadPhoto(p.photo, p.slug);
     const categoryId = categoryIds.get(p.categorySlug);
     if (!categoryId) throw new Error(`Unknown category ${p.categorySlug}`);
-    const { photo, categorySlug, ...fields } = p;
+    const { photo, categorySlug, variants, tags, ...fields } = p;
+    const stockQuantity = variants
+      ? variants.reduce((sum, v) => sum + v.stockQuantity, 0)
+      : 50;
+    const data = { ...fields, categoryId, stockQuantity, tags: tags ?? [] };
     const product = await prisma.product.upsert({
       where: { slug: p.slug },
-      update: { ...fields, categoryId, stockQuantity: 50 },
-      create: { ...fields, categoryId, stockQuantity: 50 },
+      update: data,
+      create: data,
     });
     await prisma.productImage.deleteMany({ where: { productId: product.id } });
     await prisma.productImage.create({
       data: { productId: product.id, url, altText: p.name, sortOrder: 0 },
     });
+
+    if (variants) {
+      for (const v of variants) {
+        await prisma.productVariant.upsert({
+          where: { sku: v.sku },
+          update: { ...v, productId: product.id, isActive: true, deletedAt: null },
+          create: { ...v, productId: product.id },
+        });
+      }
+    }
+
+    for (const r of REVIEW_TEMPLATES) {
+      await prisma.review.upsert({
+        where: { productId_userId: { productId: product.id, userId: r.userId } },
+        update: {
+          rating: r.rating,
+          title: r.title,
+          body: r.body,
+          authorName: r.authorName,
+          isApproved: true,
+        },
+        create: {
+          productId: product.id,
+          userId: r.userId,
+          authorName: r.authorName,
+          rating: r.rating,
+          title: r.title,
+          body: r.body,
+          isApproved: true,
+        },
+      });
+    }
+
     logger.info({ slug: p.slug }, 'Seeded product');
   }
   logger.info('Seed complete');

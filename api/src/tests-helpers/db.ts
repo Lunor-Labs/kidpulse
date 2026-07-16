@@ -1,6 +1,14 @@
 import { prisma } from '../lib/prisma';
 
 export async function resetDb(): Promise<void> {
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.coupon.deleteMany();
+  await prisma.autoDiscount.deleteMany();
+  await prisma.productBanner.deleteMany();
+  await prisma.wishlistItem.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.productVariant.deleteMany();
   await prisma.productImage.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
