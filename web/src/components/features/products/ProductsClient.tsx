@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { ProductCard } from '@/components/features/home/ProductCard';
 import { ActiveFilters } from './ActiveFilters';
@@ -48,6 +48,16 @@ export function ProductsClient({
   const [selectedMaxAge,     setSelectedMaxAge]     = useState<number | null>(initialMaxAge);
   const [sort,               setSort]               = useState<string>(initialSort);
   const [query,              setQuery]              = useState<string>(initialQuery);
+  const [filtersOpen,        setFiltersOpen]        = useState(false);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [filtersOpen]);
 
   const pushUrl = useCallback(
     (
@@ -111,8 +121,13 @@ export function ProductsClient({
 
   const categoryNames = Object.fromEntries(categories.map((c) => [c.slug, c.name]));
 
+  const activeFilterCount =
+    selectedCategories.length +
+    (maxPrice < MAX_PRICE ? 1 : 0) +
+    (selectedMinAge !== null || selectedMaxAge !== null ? 1 : 0);
+
   return (
-    <div className="mx-auto max-w-7xl px-8 py-10">
+    <div className="mx-auto max-w-7xl px-8 py-10 max-[980px]:px-4">
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-chewy text-[2rem] text-brand-indigo">
@@ -148,17 +163,94 @@ export function ProductsClient({
         onClearAll={handleClearAll}
       />
 
+      <div className="mb-3 hidden max-[980px]:block">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full border border-brand-line bg-white px-3 py-2 text-[0.82rem] font-semibold text-brand-ink shadow-sm"
+          aria-label="Open filters"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="7" y1="12" x2="17" y2="12" />
+            <line x1="10" y1="18" x2="14" y2="18" />
+          </svg>
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-indigo px-1.5 text-[0.7rem] font-bold text-white">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="flex gap-8 items-start">
-        <FilterSidebar
-          categories={categories}
-          selectedCategories={selectedCategories}
-          maxPrice={maxPrice}
-          selectedMinAge={selectedMinAge}
-          selectedMaxAge={selectedMaxAge}
-          onCategoryChange={handleCategoryChange}
-          onMaxPriceChange={handleMaxPriceChange}
-          onAgeChange={handleAgeChange}
-        />
+        <div className="max-[980px]:hidden">
+          <FilterSidebar
+            categories={categories}
+            selectedCategories={selectedCategories}
+            maxPrice={maxPrice}
+            selectedMinAge={selectedMinAge}
+            selectedMaxAge={selectedMaxAge}
+            onCategoryChange={handleCategoryChange}
+            onMaxPriceChange={handleMaxPriceChange}
+            onAgeChange={handleAgeChange}
+          />
+        </div>
+
+        {filtersOpen && (
+          <div className="fixed inset-0 z-50 min-[981px]:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setFiltersOpen(false)}
+              aria-hidden
+            />
+            <div className="absolute left-0 top-0 bottom-0 w-[85%] max-w-[340px] overflow-y-auto bg-white shadow-xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-line bg-white px-4 py-3">
+                <span className="font-chewy text-[1.15rem] text-brand-indigo">Filters</span>
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(false)}
+                  aria-label="Close filters"
+                  className="rounded-full p-1 text-brand-ink hover:bg-brand-cream"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-3">
+                <FilterSidebar
+                  categories={categories}
+                  selectedCategories={selectedCategories}
+                  maxPrice={maxPrice}
+                  selectedMinAge={selectedMinAge}
+                  selectedMaxAge={selectedMaxAge}
+                  onCategoryChange={handleCategoryChange}
+                  onMaxPriceChange={handleMaxPriceChange}
+                  onAgeChange={handleAgeChange}
+                />
+              </div>
+              <div className="sticky bottom-0 z-10 flex gap-2 border-t border-brand-line bg-white px-3 py-3">
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="flex-1 rounded-full border border-brand-line px-4 py-2 text-[0.85rem] font-semibold text-brand-ink"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(false)}
+                  className="flex-1 rounded-full bg-brand-indigo px-4 py-2 text-[0.85rem] font-semibold text-white"
+                >
+                  Show results
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 min-w-0">
           {products.length === 0 ? (

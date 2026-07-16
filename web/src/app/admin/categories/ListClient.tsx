@@ -74,8 +74,8 @@ export function CategoriesListClient() {
         </p>
       )}
       {rows && rows.length > 0 && (
-        <div className="overflow-hidden rounded-[12px] border border-brand-line">
-          <table className="w-full border-collapse text-[0.88rem]">
+        <div className="overflow-x-auto rounded-[12px] border border-brand-line">
+          <table className="w-full min-w-[640px] border-collapse text-[0.88rem]">
             <thead className="bg-brand-cream/50 text-left">
               <tr>
                 <th className="px-4 py-2 font-semibold text-brand-ink">Name</th>

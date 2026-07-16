@@ -117,7 +117,8 @@ export function CustomerActivityClient() {
               {report.topCustomers.length === 0 ? (
                 <p className="text-[0.85rem] text-brand-ink-soft">No orders in range.</p>
               ) : (
-                <table className="w-full text-[0.86rem]">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[360px] text-[0.86rem]">
                   <thead className="text-left text-brand-ink-soft">
                     <tr>
                       <th className="py-1 font-semibold">Customer</th>
@@ -147,6 +148,7 @@ export function CustomerActivityClient() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
 
@@ -157,7 +159,8 @@ export function CustomerActivityClient() {
               {report.wishlistTop.length === 0 ? (
                 <p className="text-[0.85rem] text-brand-ink-soft">No wishlist activity yet.</p>
               ) : (
-                <table className="w-full text-[0.86rem]">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[300px] text-[0.86rem]">
                   <thead className="text-left text-brand-ink-soft">
                     <tr>
                       <th className="py-1 font-semibold">Product</th>
@@ -180,6 +183,7 @@ export function CustomerActivityClient() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>

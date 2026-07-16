@@ -10,7 +10,7 @@ import { GoogleButton } from '@/components/features/auth/GoogleButton';
 export function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get('next') || '/';
+  const nextParam = search.get('next');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,12 +22,15 @@ export function LoginForm() {
     setError(null);
     try {
       const supabase = getSupabaseBrowserClient();
-      const { error: err } = await supabase.auth.signInWithPassword({
+      const { data, error: err } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       if (err) throw err;
-      router.push(next);
+      const role = (data.user?.app_metadata as { role?: string } | undefined)?.role;
+      const isAdmin = role === 'staff' || role === 'super_admin';
+      const target = nextParam || (isAdmin ? '/admin' : '/');
+      router.push(target);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-in failed');
@@ -37,7 +40,7 @@ export function LoginForm() {
 
   return (
     <>
-      <GoogleButton next={next} />
+      <GoogleButton next={nextParam ?? undefined} />
       <div className="my-5 flex items-center gap-3 text-[0.75rem] uppercase tracking-widest text-brand-ink-soft">
         <span className="flex-1 border-t border-brand-line" />
         or
