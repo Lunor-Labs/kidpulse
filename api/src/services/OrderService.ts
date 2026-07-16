@@ -88,7 +88,7 @@ export class OrderService {
           data: {
             orderNumber,
             userId: effectiveUser!.id,
-            status: input.paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING_PAYMENT',
+            status: input.paymentMethod === 'COD' ? 'PENDING' : 'PENDING_PAYMENT',
             paymentMethod: input.paymentMethod,
             paymentStatus: input.paymentMethod === 'COD' ? 'UNPAID' : 'UNPAID',
             subtotal: priced.subtotal,

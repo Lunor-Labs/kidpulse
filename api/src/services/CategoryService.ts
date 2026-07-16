@@ -3,6 +3,7 @@ import { logger } from '../lib/logger';
 import { CategoryRepository } from '../repositories/CategoryRepository';
 import { AdminCategoryDto, CategoryDto } from '../types/dto';
 import { CategoryUpsertInput } from '../types/adminSchemas';
+import { prisma } from '../lib/prisma';
 
 type AdminCategoryRow = Awaited<ReturnType<CategoryRepository['findAllForAdmin']>>[number];
 
@@ -98,9 +99,26 @@ export class CategoryService {
     return this.getForAdmin(id);
   }
 
-  async softDelete(id: string): Promise<void> {
-    const existing = await this.categoryRepo.findById(id);
-    if (!existing) throw new AppError('Category not found', 404);
-    await this.categoryRepo.softDelete(id);
+async softDelete(id: string): Promise<void> {
+  const existing = await this.categoryRepo.findById(id);
+  if (!existing) throw new AppError('Category not found', 404);
+
+  // Check if any active products are assigned to this category
+  const productCount = await prisma.product.count({
+    where: {
+      categoryId: id,
+      deletedAt: null,
+      isActive: true,
+    },
+  });
+
+  if (productCount > 0) {
+    throw new AppError(
+      `Cannot delete this category — ${productCount} product${productCount !== 1 ? 's are' : ' is'} assigned to it. Please reassign or delete those products first.`,
+      409
+    );
   }
+
+  await this.categoryRepo.softDelete(id);
+}
 }
