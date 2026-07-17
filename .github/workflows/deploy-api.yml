@@ -5,11 +5,52 @@ on:
     branches:
       - dev
       - main
+      - feature/phase6-backend-deployement
     paths:
       - 'api/**'
       - '.github/workflows/deploy-api.yml'
 
 jobs:
+  # ====================================
+  # FEATURE BRANCH TEST DEPLOYMENT
+  # ====================================
+  deploy-feature:
+    if: github.ref == 'refs/heads/feature/phase6-backend-deployement'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "postgresql://placeholder:placeholder@placeholder:5432/placeholder"
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --service 4cbea124-e715-4804-a194-c7d665bd632b --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
   # ====================================
   # DEV DEPLOYMENT → Railway Dev
   # ====================================
