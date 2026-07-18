@@ -19,6 +19,10 @@ jobs:
     environment: prod
     permissions:
       contents: read
+    env:
+      RAILWAY_PROJECT_ID: 23e7df62-a7a1-4eab-8cbd-e1101cd0cfe6
+      RAILWAY_SERVICE_ID: 4cbea124-e715-4804-a194-c7d665bd632b
+      RAILWAY_ENVIRONMENT: production
     defaults:
       run:
         working-directory: api
@@ -48,95 +52,35 @@ jobs:
 
       - name: Set Railway environment variables
         run: |
-          railway variables set PORT="${{ secrets.PORT }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set LOG_LEVEL="${{ secrets.LOG_LEVEL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_JWT_SECRET="${{ secrets.SUPABASE_JWT_SECRET }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set WEB_BASE_URL="${{ secrets.WEB_BASE_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set API_PUBLIC_URL="${{ secrets.API_PUBLIC_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set EMAIL_FROM="${{ secrets.EMAIL_FROM }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set PAYHERE_MERCHANT_ID="${{ secrets.PAYHERE_MERCHANT_ID }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set PAYHERE_MERCHANT_SECRET="${{ secrets.PAYHERE_MERCHANT_SECRET }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set PAYHERE_SANDBOX="${{ secrets.PAYHERE_SANDBOX }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_HOST="${{ secrets.SMTP_HOST }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_PORT="${{ secrets.SMTP_PORT }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_SECURE="${{ secrets.SMTP_SECURE }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_USER="${{ secrets.SMTP_USER }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_PASS="${{ secrets.SMTP_PASS }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
+          railway variables set PORT="${{ secrets.PORT }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set DATABASE_URL="${{ secrets.DATABASE_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set LOG_LEVEL="${{ secrets.LOG_LEVEL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_URL="${{ secrets.SUPABASE_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_JWT_SECRET="${{ secrets.SUPABASE_JWT_SECRET }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set WEB_BASE_URL="${{ secrets.WEB_BASE_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set API_PUBLIC_URL="${{ secrets.API_PUBLIC_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set EMAIL_FROM="${{ secrets.EMAIL_FROM }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set PAYHERE_MERCHANT_ID="${{ secrets.PAYHERE_MERCHANT_ID }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set PAYHERE_MERCHANT_SECRET="${{ secrets.PAYHERE_MERCHANT_SECRET }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set PAYHERE_SANDBOX="${{ secrets.PAYHERE_SANDBOX }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_HOST="${{ secrets.SMTP_HOST }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_PORT="${{ secrets.SMTP_PORT }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_SECURE="${{ secrets.SMTP_SECURE }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_USER="${{ secrets.SMTP_USER }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_PASS="${{ secrets.SMTP_PASS }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
-      - name: Deploy to Railway (Production)
+      - name: Deploy to Railway
         run: |
           railway up \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production \
+            --project $RAILWAY_PROJECT_ID \
+            --service $RAILWAY_SERVICE_ID \
+            --environment $RAILWAY_ENVIRONMENT \
             --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -150,6 +94,10 @@ jobs:
     environment: prod
     permissions:
       contents: read
+    env:
+      RAILWAY_PROJECT_ID: 23e7df62-a7a1-4eab-8cbd-e1101cd0cfe6
+      RAILWAY_SERVICE_ID: 4cbea124-e715-4804-a194-c7d665bd632b
+      RAILWAY_ENVIRONMENT: production
     defaults:
       run:
         working-directory: api
@@ -179,95 +127,35 @@ jobs:
 
       - name: Set Railway environment variables
         run: |
-          railway variables set PORT="${{ secrets.PORT }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set LOG_LEVEL="${{ secrets.LOG_LEVEL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SUPABASE_JWT_SECRET="${{ secrets.SUPABASE_JWT_SECRET }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set WEB_BASE_URL="${{ secrets.WEB_BASE_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set API_PUBLIC_URL="${{ secrets.API_PUBLIC_URL }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set EMAIL_FROM="${{ secrets.EMAIL_FROM }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set PAYHERE_MERCHANT_ID="${{ secrets.PAYHERE_MERCHANT_ID }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set PAYHERE_MERCHANT_SECRET="${{ secrets.PAYHERE_MERCHANT_SECRET }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set PAYHERE_SANDBOX="${{ secrets.PAYHERE_SANDBOX }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_HOST="${{ secrets.SMTP_HOST }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_PORT="${{ secrets.SMTP_PORT }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_SECURE="${{ secrets.SMTP_SECURE }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_USER="${{ secrets.SMTP_USER }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
-          railway variables set SMTP_PASS="${{ secrets.SMTP_PASS }}" \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production
+          railway variables set PORT="${{ secrets.PORT }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set DATABASE_URL="${{ secrets.DATABASE_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set LOG_LEVEL="${{ secrets.LOG_LEVEL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_URL="${{ secrets.SUPABASE_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SUPABASE_JWT_SECRET="${{ secrets.SUPABASE_JWT_SECRET }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set WEB_BASE_URL="${{ secrets.WEB_BASE_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set API_PUBLIC_URL="${{ secrets.API_PUBLIC_URL }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set EMAIL_FROM="${{ secrets.EMAIL_FROM }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set PAYHERE_MERCHANT_ID="${{ secrets.PAYHERE_MERCHANT_ID }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set PAYHERE_MERCHANT_SECRET="${{ secrets.PAYHERE_MERCHANT_SECRET }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set PAYHERE_SANDBOX="${{ secrets.PAYHERE_SANDBOX }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_HOST="${{ secrets.SMTP_HOST }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_PORT="${{ secrets.SMTP_PORT }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_SECURE="${{ secrets.SMTP_SECURE }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_USER="${{ secrets.SMTP_USER }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
+          railway variables set SMTP_PASS="${{ secrets.SMTP_PASS }}" --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID --environment $RAILWAY_ENVIRONMENT
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
-      - name: Deploy to Railway (Production)
+      - name: Deploy to Railway
         run: |
           railway up \
-            --project ${{ secrets.RAILWAY_PROJECT_ID }} \
-            --service ${{ secrets.RAILWAY_SERVICE_ID }} \
-            --environment production \
+            --project $RAILWAY_PROJECT_ID \
+            --service $RAILWAY_SERVICE_ID \
+            --environment $RAILWAY_ENVIRONMENT \
             --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
