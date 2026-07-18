@@ -73,7 +73,7 @@ export function DateRangePicker({
           type="button"
           onClick={onExport}
           disabled={exporting}
-          className="ml-auto rounded-full border border-brand-line px-4 py-2 text-[0.82rem] font-semibold text-brand-ink hover:bg-brand-cream disabled:opacity-60"
+          className="ml-auto rounded-full border border-brand-line px-4 py-2 text-[0.82rem] font-semibold text-brand-ink hover:bg-brand-cream disabled:opacity-60 max-[980px]:ml-0 max-[980px]:w-full"
         >
           {exporting ? 'Preparing…' : exportLabel}
         </button>

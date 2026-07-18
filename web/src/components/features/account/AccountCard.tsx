@@ -7,7 +7,7 @@ interface AccountCardProps {
 
 export function AccountCard({ title, subtitle, actions, children }: AccountCardProps) {
   return (
-    <section className="rounded-[16px] border border-brand-line bg-white p-6">
+    <section className="rounded-[16px] border border-brand-line bg-white p-6 max-[980px]:p-4">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-chewy text-[1.4rem] text-brand-indigo">{title}</h1>
