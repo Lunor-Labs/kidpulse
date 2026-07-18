@@ -41,8 +41,8 @@ export function FilterSidebar({
   onAgeChange,
 }: FilterSidebarProps) {
   return (
-    <aside className="w-[220px] shrink-0">
-      <div className="sticky top-[80px] rounded-[18px] border border-brand-line bg-white p-5">
+    <aside className="w-[220px] shrink-0 max-[980px]:w-full">
+      <div className="sticky top-[80px] rounded-[18px] border border-brand-line bg-white p-5 max-[980px]:static max-[980px]:rounded-none max-[980px]:border-0 max-[980px]:p-0">
 
         {/* ── Category ── */}
         <div className="mb-5">

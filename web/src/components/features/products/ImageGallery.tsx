@@ -24,10 +24,10 @@ export function ImageGallery({ images, productName, categorySlug }: ImageGallery
   const emoji = EMOJI_FALLBACK[categorySlug] ?? '🎨';
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 max-[980px]:flex-col-reverse">
       {/* Thumbnail strip */}
       {hasImages && images.length > 1 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 max-[980px]:flex-row max-[980px]:flex-wrap">
           {images.map((img, i) => (
             <button
               key={img.id}
@@ -51,7 +51,7 @@ export function ImageGallery({ images, productName, categorySlug }: ImageGallery
       )}
 
       {/* Main image */}
-      <div className="relative flex-1 overflow-hidden rounded-[20px] border border-brand-line bg-brand-cream">
+      <div className="relative flex-1 overflow-hidden rounded-[20px] border border-brand-line bg-brand-cream max-[980px]:aspect-square">
         {hasImages && activeImage ? (
           <Image
             src={activeImage.url}

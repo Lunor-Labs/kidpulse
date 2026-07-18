@@ -8,7 +8,7 @@ interface GoogleButtonProps {
   label?: string;
 }
 
-export function GoogleButton({ next = '/', label = 'Continue with Google' }: GoogleButtonProps) {
+export function GoogleButton({ next, label = 'Continue with Google' }: GoogleButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,9 @@ export function GoogleButton({ next = '/', label = 'Continue with Google' }: Goo
     setError(null);
     try {
       const supabase = getSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const redirectTo = next
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+        : `${window.location.origin}/auth/callback`;
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo },

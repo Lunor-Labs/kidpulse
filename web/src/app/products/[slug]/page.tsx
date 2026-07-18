@@ -104,12 +104,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-10">
+    <div className="mx-auto max-w-7xl px-8 py-10 max-[980px]:px-4 max-[980px]:py-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <nav className="mb-6 flex items-center gap-2 text-[0.82rem] text-brand-ink-soft">
+      <nav className="mb-6 flex items-center gap-2 text-[0.82rem] text-brand-ink-soft max-[980px]:mb-3 max-[980px]:text-[0.75rem]">
         <Link href="/" className="hover:text-brand-indigo">Home</Link>
         <span>›</span>
         <Link

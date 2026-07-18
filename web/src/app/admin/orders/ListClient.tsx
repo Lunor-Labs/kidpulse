@@ -119,7 +119,7 @@ export function OrdersListClient() {
       )}
       {rows && rows.length > 0 && (
         <div className="overflow-x-auto rounded-[12px] border border-brand-line">
-          <table className="w-full border-collapse text-[0.86rem]">
+          <table className="w-full min-w-[820px] border-collapse text-[0.86rem]">
             <thead className="bg-brand-cream/50 text-left">
               <tr>
                 <th className="px-3 py-2 font-semibold text-brand-ink">Order</th>

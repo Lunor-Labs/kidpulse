@@ -30,7 +30,7 @@ export function AccountSidebar() {
   }
 
   return (
-    <aside className="lg:sticky lg:top-[100px] lg:w-[240px] lg:shrink-0">
+    <aside className="max-[980px]:hidden lg:sticky lg:top-[100px] lg:w-[240px] lg:shrink-0">
       <div className="rounded-[16px] border border-brand-line bg-white p-5">
         <div className="mb-4 border-b border-brand-line pb-4">
           <div className="text-[0.72rem] font-semibold uppercase tracking-widest text-brand-ink-soft">
