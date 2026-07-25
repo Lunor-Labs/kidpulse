@@ -8,9 +8,19 @@ const schema = z.object({
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().min(1),
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
-  SUPABASE_URL: z.string().url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_JWT_SECRET: z.string().min(32),
+
+  // Auth
+  JWT_SECRET: z.string().min(32),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+
+  // S3-compatible storage
+  S3_ENDPOINT: z.string().url(),
+  S3_REGION: z.string().min(1),
+  S3_BUCKET: z.string().min(1),
+  S3_ACCESS_KEY_ID: z.string().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_PUBLIC_URL: z.string().url(),
+
   LOG_LEVEL: z.string().default('info'),
   RESEND_API_KEY: z.string().optional(),
   SMTP_HOST: z.string().optional(),

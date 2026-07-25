@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { AppError } from '../lib/AppError';
 import { logger } from '../lib/logger';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import { ImageUploadInput } from '../types/adminSchemas';
-import { ImageUploadResult } from '../types/dto';
-
-const BUCKET = 'kidpulse-media';
+import { env } from '../config/env';
+import type { ImageUploadInput } from '../types/adminSchemas';
+import type { ImageUploadResult } from '../types/dto';
 
 const EXT_BY_MIME: Record<string, string> = {
   'image/png': 'png',
@@ -14,6 +13,18 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/webp': 'webp',
   'image/gif': 'gif',
 };
+
+function getS3Client(): S3Client {
+  return new S3Client({
+    endpoint: env.S3_ENDPOINT,
+    region: env.S3_REGION,
+    credentials: {
+      accessKeyId: env.S3_ACCESS_KEY_ID,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+    },
+    forcePathStyle: true,
+  });
+}
 
 export class UploadService {
   async uploadImage(input: ImageUploadInput): Promise<ImageUploadResult> {
@@ -26,18 +37,26 @@ export class UploadService {
     } catch {
       throw new AppError('Invalid image data', 400);
     }
+
     if (buffer.length === 0) throw new AppError('Empty image data', 400);
 
-    const client = getSupabaseAdmin();
-    const { error } = await client.storage.from(BUCKET).upload(path, buffer, {
-      contentType: input.contentType,
-      upsert: false,
-    });
-    if (error) {
-      logger.error({ error, path }, 'Supabase upload failed');
+    const client = getS3Client();
+
+    try {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: env.S3_BUCKET,
+          Key: path,
+          Body: buffer,
+          ContentType: input.contentType,
+        })
+      );
+    } catch (error) {
+      logger.error({ error, path }, 'S3 upload failed');
       throw new AppError('Unable to upload image', 500);
     }
-    const { data } = client.storage.from(BUCKET).getPublicUrl(path);
-    return { url: data.publicUrl, path };
+
+    const url = `${env.S3_PUBLIC_URL.replace(/\/+$/, '')}/${path}`;
+    return { url, path };
   }
 }

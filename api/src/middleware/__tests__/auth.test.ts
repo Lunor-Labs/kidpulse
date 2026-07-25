@@ -4,7 +4,7 @@ import { env } from '../../config/env';
 import { AppError } from '../../lib/AppError';
 import { authenticate, requireRole } from '../auth';
 
-const secret = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
+const secret = new TextEncoder().encode(env.JWT_SECRET);
 
 async function makeToken(payload: Record<string, unknown>): Promise<string> {
   return new SignJWT(payload)

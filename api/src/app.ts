@@ -4,6 +4,7 @@ import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import { allowedOrigins } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
+import { authRouter } from './routes/auth';
 import { accountRouter } from './routes/account';
 import { adminRouter } from './routes/admin';
 import { bannerRouter } from './routes/banners';
@@ -46,6 +47,7 @@ const adminLimiter = rateLimit({
 
 app.use(generalLimiter);
 
+app.use('/api/v1/auth', strictLimiter, authRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/banners', bannerRouter);

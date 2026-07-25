@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { Session } from '@supabase/supabase-js';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
-import { apiClient } from '@/lib/apiClient';
+import { jwtVerify } from 'jose';
 import { useAuthStore } from '@/stores/authStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
+import { apiClient } from '@/lib/apiClient';
+
+const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET ?? '';
 
 async function fetchWishlistIds(token: string): Promise<string[]> {
   try {
@@ -15,6 +16,14 @@ async function fetchWishlistIds(token: string): Promise<string[]> {
   }
 }
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split('=')[1]) : null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setSession = useAuthStore((s) => s.setSession);
   const clear = useAuthStore((s) => s.clear);
@@ -22,71 +31,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearWishlist = useWishlistStore((s) => s.clear);
 
   useEffect(() => {
-    let supabase: ReturnType<typeof getSupabaseBrowserClient>;
-    try {
-      supabase = getSupabaseBrowserClient();
-    } catch {
-      clear();
-      return;
-    }
-
     let ignore = false;
 
-    supabase.auth.getSession().then(async (result: { data: { session: Session | null } }) => {
-      if (ignore) return;
-      const session = result.data.session;
-      if (!session?.user) {
+    async function init() {
+      const token = getCookie('auth_token');
+      if (!token) {
         clear();
         clearWishlist();
         return;
       }
-      const meta = session.user.user_metadata as { full_name?: string; name?: string };
-      const appMeta = (session.user.app_metadata ?? {}) as { role?: string };
-      const role =
-        appMeta.role === 'staff' || appMeta.role === 'super_admin'
-          ? appMeta.role
-          : 'customer';
-      setSession(
-        {
-          id: session.user.id,
-          email: session.user.email ?? '',
-          fullName: meta.full_name ?? meta.name ?? null,
-          role,
-        },
-        session.access_token
-      );
-      const ids = await fetchWishlistIds(session.access_token);
-      if (!ignore) setWishlist(ids);
-    });
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      if (!session?.user) {
+      try {
+        const secret = new TextEncoder().encode(JWT_SECRET);
+        const { payload } = await jwtVerify(token, secret);
+
+        const role =
+          payload.role === 'staff' || payload.role === 'super_admin'
+            ? (payload.role as 'staff' | 'super_admin')
+            : 'customer';
+
+        if (!ignore) {
+          setSession(
+            {
+              id: payload.sub ?? '',
+              email: typeof payload.email === 'string' ? payload.email : '',
+              fullName: typeof payload.fullName === 'string' ? payload.fullName : null,
+              role,
+            },
+            token
+          );
+
+          const ids = await fetchWishlistIds(token);
+          if (!ignore) setWishlist(ids);
+        }
+      } catch {
         clear();
         clearWishlist();
-        return;
       }
-      const meta = session.user.user_metadata as { full_name?: string; name?: string };
-      const appMeta = (session.user.app_metadata ?? {}) as { role?: string };
-      const role =
-        appMeta.role === 'staff' || appMeta.role === 'super_admin'
-          ? appMeta.role
-          : 'customer';
-      setSession(
-        {
-          id: session.user.id,
-          email: session.user.email ?? '',
-          fullName: meta.full_name ?? meta.name ?? null,
-          role,
-        },
-        session.access_token
-      );
-      const ids = await fetchWishlistIds(session.access_token);
-      setWishlist(ids);
-    });
+    }
+
+    init();
 
     return () => {
       ignore = true;
-      sub.subscription.unsubscribe();
     };
   }, [setSession, clear, setWishlist, clearWishlist]);
 

@@ -119,6 +119,7 @@ model UserProfile {
   id          String    @id
   email       String    @unique
   fullName    String?
+  passwordHash String?
   phone       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -406,4 +407,30 @@ model AdminActionLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("admin_action_log")
+}
+
+model StaffUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String?
+  role         String    @default("staff")
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("staff_users")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  email     String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@map("password_reset_tokens")
 }
