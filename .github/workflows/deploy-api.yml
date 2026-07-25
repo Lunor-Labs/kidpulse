@@ -62,23 +62,13 @@ jobs:
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            if [ "${{ github.ref_name }}" = "main" ]; then
-              DB_URL="${{ secrets.DATABASE_URL_PROD }}"
-            else
-              DB_URL="${{ secrets.DATABASE_URL_DEV }}"
-            fi
             docker run --rm \
-              --network ${{ secrets.DOCKER_NETWORK }} \
-              -e DATABASE_URL="$DB_URL" \
+              --network ${{ vars.DOCKER_NETWORK }} \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_tag }} \
               npx prisma migrate deploy
 
       - name: Trigger Coolify deploy
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            WEBHOOK="${{ secrets.COOLIFY_DEPLOY_WEBHOOK_PROD }}"
-          else
-            WEBHOOK="${{ secrets.COOLIFY_DEPLOY_WEBHOOK_DEV }}"
-          fi
-          curl -fsS -X GET "$WEBHOOK" \
+          curl -fsS -X GET "${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
