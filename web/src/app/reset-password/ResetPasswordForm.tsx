@@ -1,12 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { apiResetPassword } from '@/lib/api';
 import { PasswordField } from '@/components/features/auth/PasswordField';
 
 export function ResetPasswordForm() {
   const router = useRouter();
+  const search = useSearchParams();
+  const token = search.get('token') ?? '';
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,13 +24,15 @@ export function ResetPasswordForm() {
       setError('Passwords do not match.');
       return;
     }
+    if (!token) {
+      setError('Reset link is invalid. Please request a new one.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error: err } = await supabase.auth.updateUser({ password });
-      if (err) throw err;
-      router.push('/account/profile');
+      await apiResetPassword(token, password);
+      router.push('/login');
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to reset password');

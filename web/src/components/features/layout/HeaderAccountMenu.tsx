@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { isAdminRole, useAuthStore } from '@/stores/authStore';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
 import { ACCOUNT_NAV_LINKS, ADMIN_NAV_LINKS, NAV_LINKS } from '@/config/nav';
 
 function UserIcon() {
@@ -31,13 +30,9 @@ export function HeaderAccountMenu() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  async function signOut() {
-    try {
-      const supabase = getSupabaseBrowserClient();
-      await supabase.auth.signOut();
-    } catch {
-      /* ignore */
-    }
+  function signOut() {
+    document.cookie = 'auth_token=; path=/; max-age=0; SameSite=Lax';
+    useAuthStore.getState().clear();
     setOpen(false);
     router.push('/');
     router.refresh();
@@ -71,7 +66,6 @@ export function HeaderAccountMenu() {
         >
           <UserIcon />
         </button>
-
         {open && (
           <>
             <button
@@ -132,7 +126,6 @@ export function HeaderAccountMenu() {
           {user.fullName ?? user.email}
         </span>
       </button>
-
       {open && (
         <>
           {/* Mobile backdrop with blur */}
@@ -211,7 +204,6 @@ export function HeaderAccountMenu() {
                   {link.label}
                 </Link>
               ))}
-
               {!isAdmin && (
                 <>
                   <div className="mt-1 px-4 pt-3 pb-1 text-[0.7rem] font-semibold uppercase tracking-widest text-brand-ink-soft">
@@ -229,7 +221,6 @@ export function HeaderAccountMenu() {
                   ))}
                 </>
               )}
-
               <button
                 type="button"
                 onClick={signOut}

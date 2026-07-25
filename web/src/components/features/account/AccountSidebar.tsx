@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
 
 const LINKS = [
   { href: '/account/profile', label: 'Profile' },
@@ -16,18 +15,15 @@ const LINKS = [
 export function AccountSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
 
-  async function signOut() {
-    try {
-      const supabase = getSupabaseBrowserClient();
-      await supabase.auth.signOut();
-    } catch {
-      /* ignore */
-    }
+  function signOut() {
+    document.cookie = 'auth_token=; path=/; max-age=0; SameSite=Lax';
+    useAuthStore.getState().clear();
     router.push('/');
     router.refresh();
   }
+
+  const user = useAuthStore((s) => s.user);
 
   return (
     <aside className="max-[980px]:hidden lg:sticky lg:top-[100px] lg:w-[240px] lg:shrink-0">

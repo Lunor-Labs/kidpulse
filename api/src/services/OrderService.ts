@@ -1,9 +1,8 @@
+import { randomUUID } from 'node:crypto';
 import { env } from '../config/env';
 import { AppError } from '../lib/AppError';
 import { logger } from '../lib/logger';
 import { prisma } from '../lib/prisma';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AuthUser } from '../types/express';
 import type { CheckoutInput, CheckoutShippingInput } from '../types/accountSchemas';
 import type { CheckoutResultDto, OrderDto } from '../types/dto';
@@ -30,12 +29,7 @@ export class OrderService {
     const shipping = await this.resolveShipping(user, input);
     const priced = await this.priceItems(input.items);
 
-    // Group variant lines by product so per-product quantity discounts pool
-    // quantities across variants of the same product.
-    const groupedForPromotions = new Map<
-      string,
-      { productId: string; categoryId: string; price: number; quantity: number; lineTotal: number }
-    >();
+    const groupedForPromotions = new Map<string, { productId: string; categoryId: string; price: number; quantity: number; lineTotal: number }>();
     for (const item of priced.items) {
       const existing = groupedForPromotions.get(item.productId);
       if (existing) {
@@ -51,13 +45,13 @@ export class OrderService {
         });
       }
     }
+
     const pricing = await this.promotions.applyToCart(
       user?.id ?? null,
       [...groupedForPromotions.values()],
       input.couponCode ?? null
     );
-    const itemDiscountAmount =
-      pricing.autoDiscountAmount + pricing.quantityDiscountAmount;
+    const itemDiscountAmount = pricing.autoDiscountAmount + pricing.quantityDiscountAmount;
     const discountAmount = pricing.totalDiscount;
     const subtotalAfterDiscount = Math.max(0, priced.subtotal - discountAmount);
     const shippingAmount =
@@ -123,6 +117,7 @@ export class OrderService {
           },
           include: { items: { include: { product: { select: { slug: true } } } } },
         });
+
         const productsWithVariantLines = new Set<string>();
         for (const item of priced.items) {
           if (item.variantId) {
@@ -138,6 +133,7 @@ export class OrderService {
             });
           }
         }
+
         for (const productId of productsWithVariantLines) {
           const agg = await tx.productVariant.aggregate({
             where: { productId, deletedAt: null, isActive: true },
@@ -148,13 +144,16 @@ export class OrderService {
             data: { stockQuantity: agg._sum.stockQuantity ?? 0 },
           });
         }
+
         return order;
       });
+
       if (pricing.coupon) {
         await this.promotions
           .recordRedemption(pricing.coupon.id, effectiveUser!.id, created.id)
           .catch(() => undefined);
       }
+
       const dto = this.toDto(created as FullOrderRow);
       await this.sendPostCheckoutEmails(dto, createdAccount).catch((err) => {
         logger.warn({ err }, 'Post-checkout email failed');
@@ -162,6 +161,7 @@ export class OrderService {
       await this.sendLowStockAlerts(priced.items).catch((err) => {
         logger.warn({ err }, 'Low-stock alert email failed');
       });
+
       return {
         order: dto,
         createdAccount,
@@ -285,43 +285,23 @@ export class OrderService {
     email: string,
     fullName: string
   ): Promise<{ userId: string; created: boolean; emailSent: boolean }> {
-    const supa = getSupabaseAdmin();
-    let userId: string | null = null;
-    let created = false;
-    for (let page = 1; page <= 20; page += 1) {
-      const { data, error } = await supa.auth.admin.listUsers({ page, perPage: 200 });
-      if (error) throw new AppError('Auth lookup failed', 500);
-      const match = data.users.find(
-        (u: SupabaseUser) => u.email?.toLowerCase() === email.toLowerCase()
-      );
-      if (match) {
-        userId = match.id;
-        break;
-      }
-      if (data.users.length < 200) break;
+    const existing = await prisma.userProfile.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (existing) {
+      return { userId: existing.id, created: false, emailSent: false };
     }
-    if (!userId) {
-      const { data, error } = await supa.auth.admin.createUser({
-        email,
-        email_confirm: false,
-        user_metadata: { fullName },
-        app_metadata: { role: 'customer' },
-      });
-      if (error || !data.user) throw new AppError('Unable to create guest account', 500);
-      userId = data.user.id;
-      created = true;
-    }
-    let emailSent = false;
-    if (created) {
-      try {
-        await supa.auth.admin.generateLink({ type: 'magiclink', email });
-        emailSent = true;
-      } catch (err) {
-        logger.warn({ err }, 'Guest magic link generation failed');
-      }
-    }
-    if (!userId) throw new AppError('Unable to resolve guest account', 500);
-    return { userId, created, emailSent };
+
+    const newProfile = await prisma.userProfile.create({
+      data: {
+        id: randomUUID(),
+        email: email.toLowerCase(),
+        fullName,
+      },
+    });
+
+    return { userId: newProfile.id, created: true, emailSent: false };
   }
 
   private async sendLowStockAlerts(
@@ -446,4 +426,3 @@ function generateOrderNumber(): string {
   const ts = Date.now().toString(36).slice(-4).toUpperCase();
   return `KP-${ts}${rand}`;
 }
-

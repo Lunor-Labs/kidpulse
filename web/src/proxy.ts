@@ -1,60 +1,43 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const pathname = request.nextUrl.pathname;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const isAccountRoute = pathname.startsWith('/account');
+  const isAdminRoute = pathname.startsWith('/admin');
 
-  const isAccountRoute = request.nextUrl.pathname.startsWith('/account');
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
-
-  if (!url || !key) {
-    if (isAccountRoute || isAdminRoute) {
-      const login = new URL('/login', request.url);
-      login.searchParams.set('next', request.nextUrl.pathname);
-      return NextResponse.redirect(login);
-    }
-    return response;
+  if (!isAccountRoute && !isAdminRoute) {
+    return NextResponse.next({ request });
   }
 
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        for (const { name, value } of cookiesToSet) {
-          request.cookies.set(name, value);
-        }
-        response = NextResponse.next({ request });
-        for (const { name, value, options } of cookiesToSet) {
-          response.cookies.set(name, value, options);
-        }
-      },
-    },
-  });
+  const token = request.cookies.get('auth_token')?.value;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if ((isAccountRoute || isAdminRoute) && !user) {
+  if (!token || !JWT_SECRET) {
     const login = new URL('/login', request.url);
-    login.searchParams.set('next', request.nextUrl.pathname);
+    login.searchParams.set('next', pathname);
     return NextResponse.redirect(login);
   }
 
-  if (isAdminRoute && user) {
-    const role =
-      (user.app_metadata as { role?: string } | null)?.role ?? 'customer';
-    if (role !== 'staff' && role !== 'super_admin') {
-      return NextResponse.redirect(new URL('/account', request.url));
-    }
-  }
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
 
-  return response;
+    if (isAdminRoute) {
+      const role = payload.role as string | undefined;
+      if (role !== 'staff' && role !== 'super_admin') {
+        return NextResponse.redirect(new URL('/account', request.url));
+      }
+    }
+
+    return NextResponse.next({ request });
+  } catch {
+    const login = new URL('/login', request.url);
+    login.searchParams.set('next', pathname);
+    return NextResponse.redirect(login);
+  }
 }
 
 export const config = {

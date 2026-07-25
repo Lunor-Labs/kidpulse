@@ -3,9 +3,8 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { apiLogin } from '@/lib/api';
 import { PasswordField } from '@/components/features/auth/PasswordField';
-import { GoogleButton } from '@/components/features/auth/GoogleButton';
 
 export function LoginForm() {
   const router = useRouter();
@@ -21,14 +20,9 @@ export function LoginForm() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (err) throw err;
-      const role = (data.user?.app_metadata as { role?: string } | undefined)?.role;
-      const isAdmin = role === 'staff' || role === 'super_admin';
+      const result = await apiLogin(email.trim(), password);
+      document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      const isAdmin = result.role === 'staff' || result.role === 'super_admin';
       const target = nextParam || (isAdmin ? '/admin' : '/');
       router.push(target);
       router.refresh();
@@ -40,7 +34,6 @@ export function LoginForm() {
 
   return (
     <>
-      <GoogleButton next={nextParam ?? undefined} />
       <div className="my-5 flex items-center gap-3 text-[0.75rem] uppercase tracking-widest text-brand-ink-soft">
         <span className="flex-1 border-t border-brand-line" />
         or
