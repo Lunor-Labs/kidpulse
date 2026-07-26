@@ -30,7 +30,14 @@ const schema = z.object({
 
   // Auth
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  // Same '' -> .default() gap as ALLOWED_ORIGINS above, but it fails later and
+  // far less obviously: jose's setExpirationTime('') throws 'Invalid time
+  // period format', so a *correct* password 500s while a wrong one still
+  // returns 401 — the deployment looks healthy until someone signs in.
+  JWT_EXPIRES_IN: z
+    .string()
+    .default('7d')
+    .transform((raw) => raw.trim() || '7d'),
 
   // S3-compatible storage
   S3_ENDPOINT: z.string().url(),
