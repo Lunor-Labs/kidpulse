@@ -14,6 +14,7 @@
     "prisma:deploy": "dotenv -e ../.env -- prisma migrate deploy",
     "prisma:studio": "dotenv -e ../.env -- prisma studio",
     "admin:create": "dotenv -e ../.env -- tsx src/scripts/create-staff-user.ts",
+    "create-admin": "node dist/scripts/create-staff-user.js",
     "admin:promote": "dotenv -e ../.env -- tsx scripts/promote-user.ts",
     "admin:storage:setup": "dotenv -e ../.env -- tsx scripts/setup-storage.ts",
     "seed:coupons": "dotenv -e ../.env -- tsx scripts/seed-coupons.ts",

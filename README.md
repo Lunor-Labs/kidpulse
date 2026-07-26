@@ -49,10 +49,11 @@ create staff is an admin-authenticated endpoint, so the first account is made wi
 
 ```bash
 cd api
-npm run admin:create -- <email> <password> [role]
+npm run admin:create -- --email <email> --password <password> [--role <role>]
 ```
 
 - `role` is `super_admin` (default) or `staff`.
+- Positional arguments work too: `npm run admin:create -- <email> <password> [role]`.
 - Existing accounts are left untouched unless you pass `--force`, which resets the password
   and re-activates the account.
 - Set `STAFF_PASSWORD` instead of passing the password as an argument to keep it out of your
@@ -61,10 +62,11 @@ npm run admin:create -- <email> <password> [role]
 Only `DATABASE_URL` is required, so the same script runs against a deployed database. It
 lives in `src/scripts/` so `npm run build` compiles it into `dist/` and it ships in the
 production image — which installs `--omit=dev` and so has no `tsx`. From a shell in the
-running container, where `DATABASE_URL` is already set:
+running container, where `DATABASE_URL` is already set, use `create-admin` — it runs the
+compiled script directly and needs neither `tsx` nor `dotenv`:
 
 ```bash
-node dist/scripts/create-staff-user.js <email> <password>
+npm run create-admin -- --email <email> --password <password>
 ```
 
 Then sign in at `/login`. Once one `super_admin` exists, further staff can be added from

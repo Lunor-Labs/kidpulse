@@ -5,13 +5,16 @@
  * admin-authenticated endpoint (AdminStaffService.create), which is a
  * chicken-and-egg on a fresh database: you need a staff login to make one.
  *
- * Usage (from api/):
- *   npm run admin:create -- <email> <password> [role]
+ * Usage (from api/, local dev — runs through tsx and loads ../.env):
+ *   npm run admin:create -- --email <email> --password <password> [--role <role>]
  *
- * Examples:
+ * Inside a deployed container (runs the compiled dist/, no tsx needed):
+ *   npm run create-admin -- --email <email> --password <password>
+ *
+ * Flags and positional arguments are both accepted:
  *   npm run admin:create -- admin@kidpulse.lk 'S3cret-pass'
- *   npm run admin:create -- staff@kidpulse.lk 'S3cret-pass' staff
- *   npm run admin:create -- admin@kidpulse.lk 'new-pass' super_admin --force
+ *   npm run admin:create -- --email staff@kidpulse.lk --password 'S3cret-pass' --role staff
+ *   npm run admin:create -- --email admin@kidpulse.lk --password 'new-pass' --force
  *
  * `--force` resets the password of an existing account (and re-activates it)
  * instead of refusing. Without it the script never touches an existing row.
@@ -23,8 +26,6 @@
  * deployed database. It lives under src/ (rather than alongside the dev-only
  * scripts/) so that `npm run build` compiles it into dist/ and it ships in the
  * production image — which installs --omit=dev and therefore has no tsx.
- * Inside a running container:
- *   node dist/scripts/create-staff-user.js admin@kidpulse.lk 'S3cret-pass'
  */
 
 import bcrypt from 'bcryptjs';
@@ -39,18 +40,51 @@ const BCRYPT_ROUNDS = 12;
 
 function usage(message: string): never {
   console.error(`${message}\n`);
-  console.error('Usage: npm run admin:create -- <email> <password> [role] [--force]');
+  console.error(
+    'Usage: npm run admin:create -- --email <email> --password <password> [--role <role>] [--force]'
+  );
+  console.error('       npm run admin:create -- <email> <password> [role] [--force]');
   console.error(`Roles: ${VALID_ROLES.join(' | ')} (default: super_admin)`);
   process.exit(1);
 }
 
-async function main() {
-  const args = process.argv.slice(2);
-  const force = args.includes('--force');
-  const positional = args.filter((a) => a !== '--force');
+/**
+ * Accepts `--email a@b.c` / `--email=a@b.c` flags as well as bare positional
+ * arguments, so the same script works with either calling convention.
+ */
+function parseArgs(argv: string[]) {
+  const flags: Record<string, string> = {};
+  const positional: string[] = [];
+  let force = false;
 
-  const [emailArg, passwordArg, roleArg] = positional;
-  const password = passwordArg ?? process.env.STAFF_PASSWORD;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--force') {
+      force = true;
+      continue;
+    }
+    if (!arg.startsWith('--')) {
+      positional.push(arg);
+      continue;
+    }
+
+    const [name, inlineValue] = arg.slice(2).split(/=(.*)/s, 2);
+    // `--email value` consumes the next argv entry; `--email=value` does not.
+    const value = inlineValue ?? argv[++i];
+    if (value === undefined) usage(`Missing value for --${name}.`);
+    flags[name] = value;
+  }
+
+  return { flags, positional, force };
+}
+
+async function main() {
+  const { flags, positional, force } = parseArgs(process.argv.slice(2));
+
+  const [emailPositional, passwordPositional, rolePositional] = positional;
+  const emailArg = flags.email ?? emailPositional;
+  const roleArg = flags.role ?? rolePositional;
+  const password = flags.password ?? passwordPositional ?? process.env.STAFF_PASSWORD;
 
   if (!emailArg) usage('Missing <email>.');
   if (!password) usage('Missing <password> (or set STAFF_PASSWORD).');
