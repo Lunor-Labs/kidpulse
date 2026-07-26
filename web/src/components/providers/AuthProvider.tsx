@@ -1,12 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
-import { jwtVerify } from 'jose';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore, type SessionRole, type SessionUser } from '@/stores/authStore';
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { apiClient } from '@/lib/apiClient';
 
-const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET ?? '';
+// The browser can't verify the token's signature — that would mean shipping the
+// HMAC key to every visitor. `/me` is the authority: it 401s on a bad or expired
+// token, which is the same signal jwtVerify() used to give us.
+async function fetchSession(token: string): Promise<SessionUser> {
+  const { user } = await apiClient.get<{ user: SessionUser }>('/api/v1/auth/me', token);
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName ?? null,
+    role: normalizeRole(user.role),
+  };
+}
+
+function normalizeRole(role: unknown): SessionRole {
+  return role === 'staff' || role === 'super_admin' ? role : 'customer';
+}
 
 async function fetchWishlistIds(token: string): Promise<string[]> {
   try {
@@ -42,29 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const user = await fetchSession(token);
+        if (ignore) return;
 
-        const role =
-          payload.role === 'staff' || payload.role === 'super_admin'
-            ? (payload.role as 'staff' | 'super_admin')
-            : 'customer';
+        setSession(user, token);
 
-        if (!ignore) {
-          setSession(
-            {
-              id: payload.sub ?? '',
-              email: typeof payload.email === 'string' ? payload.email : '',
-              fullName: typeof payload.fullName === 'string' ? payload.fullName : null,
-              role,
-            },
-            token
-          );
-
-          const ids = await fetchWishlistIds(token);
-          if (!ignore) setWishlist(ids);
-        }
+        const ids = await fetchWishlistIds(token);
+        if (!ignore) setWishlist(ids);
       } catch {
+        if (ignore) return;
         clear();
         clearWishlist();
       }

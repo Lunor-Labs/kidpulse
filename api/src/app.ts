@@ -53,7 +53,14 @@ const adminLimiter = rateLimit({
 
 app.use(generalLimiter);
 
-app.use('/api/v1/auth', strictLimiter, authRouter);
+// `/me` is hit on every page load by the web AuthProvider, so it stays on the
+// general limiter. The credential endpoints beside it keep the strict budget —
+// putting /me under it would log real users out mid-session.
+app.use(
+  '/api/v1/auth',
+  (req, res, next) => (req.path === '/me' ? next() : strictLimiter(req, res, next)),
+  authRouter
+);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/banners', bannerRouter);
