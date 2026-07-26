@@ -20,14 +20,15 @@
  * instead of passing it as an argument.
  *
  * Only DATABASE_URL is required, so this can be run straight against a
- * deployed database, e.g. on the VPS:
- *   docker run --rm --network <net> -e DATABASE_URL="..." \
- *     ghcr.io/lunor-labs/kidpulse-backend:dev \
- *     npx tsx scripts/create-staff-user.ts admin@kidpulse.lk 'S3cret-pass'
+ * deployed database. It lives under src/ (rather than alongside the dev-only
+ * scripts/) so that `npm run build` compiles it into dist/ and it ships in the
+ * production image — which installs --omit=dev and therefore has no tsx.
+ * Inside a running container:
+ *   node dist/scripts/create-staff-user.js admin@kidpulse.lk 'S3cret-pass'
  */
 
 import bcrypt from 'bcryptjs';
-import { prisma } from '../src/lib/prisma';
+import { prisma } from '../lib/prisma';
 
 type StaffRole = 'staff' | 'super_admin';
 
