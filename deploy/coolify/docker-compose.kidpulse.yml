@@ -1,6 +1,10 @@
 services:
   kidpulse-backend:
     image: 'ghcr.io/lunor-labs/kidpulse-backend:dev'
+    # `dev` is a moving tag: CI overwrites it on every push. Without this,
+    # `compose up -d` reuses whatever `dev` image is already cached on the host,
+    # so a deploy recreates the container on stale code and still reports success.
+    pull_policy: always
     restart: unless-stopped
     environment:
       NODE_ENV: production
