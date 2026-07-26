@@ -16,6 +16,12 @@ import { productRouter } from './routes/products';
 
 export const app = express();
 
+// Coolify fronts this service with a single Traefik hop, so req.ip must come
+// from the last X-Forwarded-For entry. Deliberately 1 rather than `true`:
+// trusting every hop lets a client spoof the header and get a fresh
+// rate-limit bucket per request, defeating the limiter on /api/v1/auth.
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 

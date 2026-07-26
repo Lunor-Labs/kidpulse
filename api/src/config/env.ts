@@ -7,7 +7,26 @@ dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 const schema = z.object({
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().min(1),
-  ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
+  // Docker interpolates an unset `${ALLOWED_ORIGINS}` to '', which slips past
+  // .default() (that only fires on undefined) and would otherwise boot with an
+  // allowlist of [''] — silently rejecting every browser request. Normalise
+  // each entry and refuse to start rather than fail opaquely at request time.
+  // Trailing slashes are stripped: an Origin header is only ever
+  // scheme://host[:port], so 'https://x.com/' would never match.
+  ALLOWED_ORIGINS: z
+    .string()
+    .default('http://localhost:3000')
+    .transform((raw) =>
+      raw
+        .split(',')
+        .map((origin) => origin.trim().replace(/\/+$/, ''))
+        .filter(Boolean)
+    )
+    .refine((origins) => origins.length > 0, {
+      message:
+        'ALLOWED_ORIGINS is empty — every browser request would be blocked by CORS. ' +
+        'Set it to a comma-separated list of origins, e.g. https://app.example.com',
+    }),
 
   // Auth
   JWT_SECRET: z.string().min(32),
@@ -43,4 +62,4 @@ const schema = z.object({
 });
 
 export const env = schema.parse(process.env);
-export const allowedOrigins = env.ALLOWED_ORIGINS.split(',');
+export const allowedOrigins = env.ALLOWED_ORIGINS;
