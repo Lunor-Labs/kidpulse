@@ -29,7 +29,7 @@ const STATUS_TONE: Record<string, string> = {
   FAILED: 'bg-brand-berry/15 text-brand-berry',
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_BASE = process.env.API_URL ?? 'http://localhost:4000';
 
 function money(v: number, currency: string) {
   return `${currency} ${v.toLocaleString('en-LK', {

@@ -36,7 +36,7 @@ import type {
   StaffUpdateValues,
 } from '@/types/admin';
 
-const BROWSER_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const BROWSER_API_URL = process.env.API_URL ?? 'http://localhost:4000';
 
 function buildRangeQs(filters: Record<string, string | number | undefined>): string {
   const params = new URLSearchParams();
