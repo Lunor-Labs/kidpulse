@@ -284,4 +284,15 @@ export class EmailService {
     );
     await this.send(to, 'Welcome to KidPulse', html);
   }
+
+  async sendPasswordReset(to: string, ctx: { resetUrl: string }): Promise<void> {
+  const html = baseLayout(
+    'Reset your password',
+    `<p>Hi,</p>
+     <p>We received a request to reset the password for your KidPulse account.</p>
+     <p><a href="${ctx.resetUrl}" style="display:inline-block;background:#3f3d81;color:white;padding:10px 18px;border-radius:10px;text-decoration:none">Reset password</a></p>
+     <p style="font-size:13px;color:#8b8899">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>`
+  );
+  await this.send(to, 'Reset your KidPulse password', html);
+  }
 }

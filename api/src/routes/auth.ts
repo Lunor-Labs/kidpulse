@@ -8,6 +8,7 @@ import { AppError } from '../lib/AppError';
 import { env } from '../config/env';
 import { EmailService } from '../services/EmailService';
 import { authenticate } from '../middleware/auth';
+import { logger } from '../lib/logger';
 
 export const authRouter = Router();
 
@@ -151,7 +152,9 @@ authRouter.post('/forgot-password', async (req, res, next) => {
     const resetUrl = `${env.WEB_BASE_URL}/reset-password?token=${token}`;
 
     // TODO: wire up email once sendPasswordReset is added to EmailService
-    console.log(`Password reset link for ${email}: ${resetUrl}`);
+    await emailService.sendPasswordReset(email, { resetUrl }).catch((err) => {
+      logger.warn({ err }, 'Password reset email failed');
+    });
   } catch (err) {
     next(err);
   }
