@@ -105,7 +105,11 @@ async function authRequest<T>(path: string, options: RequestInit = {}): Promise<
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error?.message ?? body?.message ?? `Request failed (${res.status})`);
+    throw new Error(
+      (typeof body?.error === 'string' ? body.error : body?.error?.message)
+      ?? body?.message
+      ?? `Request failed (${res.status})`
+    );
   }
 
   const body = (await res.json()) as { data: T };
