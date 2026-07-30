@@ -41,11 +41,22 @@ export function HeaderAccountMenu() {
   const isAdmin = hydrated && isAdminRole(user?.role);
   const mobileNavLinks = isAdmin
     ? ADMIN_NAV_LINKS.filter((l) => !l.superAdminOnly || user?.role === 'super_admin').map(
-        (l) => ({ href: l.href, label: l.label })
-      )
+      (l) => ({ href: l.href, label: l.label })
+    )
     : NAV_LINKS.map((l) => ({ href: l.href, label: l.label }));
 
-  if (!hydrated || !user) {
+  if (!hydrated) {
+    return (
+      <div ref={ref} className="relative">
+        <div className="hidden min-[981px]:inline-flex items-center gap-1.5">
+          <UserIcon />
+          <span className="text-[0.9rem] font-semibold opacity-0">Login</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div ref={ref} className="relative">
         <Link
@@ -122,7 +133,7 @@ export function HeaderAccountMenu() {
         <span className="min-[981px]:hidden">
           <UserIcon />
         </span>
-        <span className="hidden max-w-[120px] truncate lg:inline">
+        <span className="hidden max-w-[120px] truncate lg:inline min-w-0">
           {user.fullName ?? user.email}
         </span>
       </button>

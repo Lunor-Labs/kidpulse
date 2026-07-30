@@ -28,7 +28,7 @@ export function PrimaryNav() {
   return (
     <nav
       aria-label="Primary"
-      className="max-[980px]:hidden flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="max-[980px]:hidden flex min-w-0 shrink items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {links.map((link) => {
         const active = isActive(link.href, pathname);

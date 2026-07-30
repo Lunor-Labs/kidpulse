@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'http', hostname: '127.0.0.1', port: '54321', pathname: '/storage/v1/object/public/**' },
       { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/object/public/**' },
+      { protocol: 'https', hostname: 's3-ub46vtahora5iaoyry6x5pud.139.99.155.129.sslip.io' },
+      { protocol: 'https', hostname: 'web-ub46vtahora5iaoyry6x5pud.139.99.155.129.sslip.io' },
+      { protocol: 'https', hostname: 'kidpulse-api-dev.lunorlabs.com' },
     ],
   },
 };
