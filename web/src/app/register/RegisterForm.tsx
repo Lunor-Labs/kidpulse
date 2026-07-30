@@ -25,7 +25,7 @@ export function RegisterForm() {
       const result = await apiRegister(email.trim(), password, fullName.trim());
       document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       router.push(next);
-      router.refresh();
+      setTimeout(() => router.refresh(), 100);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-up failed');
       setLoading(false);

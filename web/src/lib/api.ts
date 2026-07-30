@@ -8,7 +8,8 @@ import type {
   ReviewList,
 } from '@/types/catalog';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:4000';
+console.log('api.ts API_URL:', API_URL);
 
 export class ApiUnavailableError extends Error {}
 
