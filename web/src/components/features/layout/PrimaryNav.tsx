@@ -20,9 +20,10 @@ export function PrimaryNav() {
   if (!hydrated) return <nav className="max-[980px]:hidden" aria-hidden />;
 
   const links = isAdminRole(user?.role)
-    ? ADMIN_NAV_LINKS.filter((l) => !l.superAdminOnly || user?.role === 'super_admin').map(
-        (l) => ({ href: l.href, label: l.label })
-      )
+    ? ADMIN_NAV_LINKS.filter((l) =>
+        !l.dropdownOnly &&
+        (!l.superAdminOnly || user?.role === 'super_admin')
+      ).map((l) => ({ href: l.href, label: l.label }))
     : NAV_LINKS.map((l) => ({ href: l.href, label: l.label }));
 
   return (

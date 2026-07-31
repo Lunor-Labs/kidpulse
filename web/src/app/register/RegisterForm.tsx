@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { apiRegister } from '@/lib/api';
 import { PasswordField } from '@/components/features/auth/PasswordField';
+import { useAuthStore } from '@/stores/authStore';
 
 export function RegisterForm() {
   const router = useRouter();
@@ -24,6 +25,18 @@ export function RegisterForm() {
     try {
       const result = await apiRegister(email.trim(), password, fullName.trim());
       document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
+      const payload = JSON.parse(atob(result.token.split('.')[1]));
+      useAuthStore.getState().setSession(
+        {
+          id: payload.sub,
+          email: payload.email,
+          fullName: fullName.trim(),
+          role: 'customer',
+        },
+        result.token
+      );
+
       router.push(next);
       setTimeout(() => router.refresh(), 100);
     } catch (e) {
