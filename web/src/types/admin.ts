@@ -32,6 +32,24 @@ export interface AdminProductVariant {
   isActive: boolean;
 }
 
+export interface AdminVariantStageOption {
+  id: string;
+  label: string;
+  selectCount: number | null;
+  priceOverride: number | null;
+  stockQuantity: number;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface AdminVariantStage {
+  id: string;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: AdminVariantStageOption[];
+}
+
 export interface AdminProduct {
   id: string;
   name: string;
@@ -55,6 +73,8 @@ export interface AdminProduct {
   variants: AdminProductVariant[];
   avgRating: number;
   reviewCount: number;
+  hasMultiStageVariants: boolean;
+  variantStages: AdminVariantStage[];
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +96,24 @@ export interface CategoryFormValues {
   isActive: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
+}
+
+export interface ProductVariantStageOptionFormValue {
+  id?: string | null;
+  label: string;
+  selectCount?: number | null;
+  priceOverride?: number | null;
+  stockQuantity: number;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface ProductVariantStageFormValue {
+  id?: string | null;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: ProductVariantStageOptionFormValue[];
 }
 
 export interface ProductFormValues {
@@ -108,6 +146,8 @@ export interface ProductFormValues {
     sortOrder: number;
     isActive: boolean;
   }>;
+  hasMultiStageVariants: boolean;
+  variantStages: ProductVariantStageFormValue[];
 }
 
 export interface ImageUploadResult {

@@ -26,6 +26,24 @@ export interface Variant {
   sortOrder: number;
 }
 
+export interface VariantStageOption {
+  id: string;
+  label: string;
+  selectCount: number | null;
+  priceOverride: number | null;
+  stockQuantity: number;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface VariantStage {
+  id: string;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: VariantStageOption[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -47,6 +65,8 @@ export interface Product {
   variants?: Variant[];
   avgRating?: number;
   reviewCount?: number;
+  hasMultiStageVariants?: boolean;
+  variantStages?: VariantStage[];
 }
 
 export interface ProductSuggestion {

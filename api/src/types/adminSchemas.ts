@@ -37,6 +37,26 @@ const variantInputSchema = z.object({
 });
 export type VariantInput = z.infer<typeof variantInputSchema>;
 
+export const stageOptionInputSchema = z.object({
+  id: z.string().trim().min(1).nullable().optional(),
+  label: z.string().trim().min(1).max(120),
+  selectCount: z.number().int().min(1).max(20).nullable().optional(),
+  priceOverride: z.number().nonnegative().max(10_000_000).nullable().optional(),
+  stockQuantity: z.number().int().min(0).max(1_000_000).default(0),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+  isActive: z.boolean().optional(),
+});
+export type StageOptionInput = z.infer<typeof stageOptionInputSchema>;
+
+export const variantStageInputSchema = z.object({
+  id: z.string().trim().min(1).nullable().optional(),
+  stageOrder: z.number().int().min(0).max(1),
+  label: z.string().trim().min(1).max(80),
+  maxSelect: z.number().int().min(1).max(20).default(1),
+  options: z.array(stageOptionInputSchema).min(1).max(50),
+});
+export type VariantStageInput = z.infer<typeof variantStageInputSchema>;
+
 export const productUpsertSchema = z.object({
   name: z.string().trim().min(1).max(200),
   slug: slugRule,
@@ -57,6 +77,8 @@ export const productUpsertSchema = z.object({
   categoryId: z.string().trim().min(1),
   images: z.array(imageInputSchema).max(12).default([]),
   variants: z.array(variantInputSchema).max(30).default([]),
+  hasMultiStageVariants: z.boolean().optional(),
+  variantStages: z.array(variantStageInputSchema).max(2).default([]),
 });
 
 export const bannerUpsertSchema = z.object({
@@ -205,6 +227,8 @@ export const imageUploadSchema = z.object({
     .max(6_000_000, 'Image is too large (max ~4MB)'),
   folder: z.enum(['products', 'categories', 'banners', 'product-banners']).default('products'),
 });
+
+
 
 export type CategoryUpsertInput = z.infer<typeof categoryUpsertSchema>;
 export type ProductUpsertInput = z.infer<typeof productUpsertSchema>;
