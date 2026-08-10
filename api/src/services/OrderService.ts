@@ -118,6 +118,7 @@ export class OrderService {
           include: { items: { include: { product: { select: { slug: true } } } } },
         });
 
+        // ── Standard variant / product stock decrement ──
         const productsWithVariantLines = new Set<string>();
         for (const item of priced.items) {
           if (item.variantId) {
@@ -126,7 +127,8 @@ export class OrderService {
               data: { stockQuantity: { decrement: item.quantity } },
             });
             productsWithVariantLines.add(item.productId);
-          } else {
+          } else if (!item.stageOptionIds?.length) {
+            // Only decrement product-level stock for non-multi-stage items
             await tx.product.update({
               where: { id: item.productId },
               data: { stockQuantity: { decrement: item.quantity } },
@@ -134,6 +136,7 @@ export class OrderService {
           }
         }
 
+        // Sync product-level stock for variant-based items
         for (const productId of productsWithVariantLines) {
           const agg = await tx.productVariant.aggregate({
             where: { productId, deletedAt: null, isActive: true },
@@ -143,6 +146,19 @@ export class OrderService {
             where: { id: productId },
             data: { stockQuantity: agg._sum.stockQuantity ?? 0 },
           });
+        }
+
+        // ── Multi-stage option stock decrement ──
+        // Decrement each selected Stage-2 character option by the order quantity
+        for (const item of priced.items) {
+          if (item.stageOptionIds && item.stageOptionIds.length > 0) {
+            for (const optionId of item.stageOptionIds) {
+              await tx.variantStageOption.update({
+                where: { id: optionId },
+                data: { stockQuantity: { decrement: item.quantity } },
+              });
+            }
+          }
         }
 
         return order;
@@ -206,10 +222,26 @@ export class OrderService {
       },
     });
     const byId = new Map(products.map((p) => [p.id, p]));
+
+    // Validate stage option ids exist and have enough stock
+    const allStageOptionIds = items
+      .flatMap((i) => i.stageOptionIds ?? [])
+      .filter(Boolean);
+    const stageOptionsMap = new Map<string, { id: string; stockQuantity: number; label: string }>();
+    if (allStageOptionIds.length > 0) {
+      const stageOptions = await prisma.variantStageOption.findMany({
+        where: { id: { in: allStageOptionIds }, isActive: true },
+        select: { id: true, stockQuantity: true, label: true },
+      });
+      for (const opt of stageOptions) {
+        stageOptionsMap.set(opt.id, opt);
+      }
+    }
+
     let subtotal = 0;
     const priced = items.map((input) => {
       const product = byId.get(input.productId);
-      if (!product) throw new AppError(`Product no longer available`, 400);
+      if (!product) throw new AppError('Product no longer available', 400);
 
       const variant = input.variantId
         ? product.variants.find((v) => v.id === input.variantId)
@@ -218,17 +250,37 @@ export class OrderService {
         throw new AppError(`Selected option of "${product.name}" is no longer available`, 400);
       }
 
+      // For multi-stage items, validate each selected stage option stock
+      const stageOptionIds = input.stageOptionIds ?? null;
+      if (stageOptionIds && stageOptionIds.length > 0) {
+        for (const optionId of stageOptionIds) {
+          const opt = stageOptionsMap.get(optionId);
+          if (!opt) {
+            throw new AppError(`A selected character for "${product.name}" is no longer available`, 400);
+          }
+          if (opt.stockQuantity < input.quantity) {
+            throw new AppError(
+              `Only ${opt.stockQuantity} left of "${opt.label}" for "${product.name}"`,
+              400
+            );
+          }
+        }
+      }
+
       const availableStock = variant ? variant.stockQuantity : product.stockQuantity;
       const displayName = variant ? `${product.name} (${variant.label})` : product.name;
-      if (availableStock < input.quantity) {
+      if (!stageOptionIds?.length && availableStock < input.quantity) {
         throw new AppError(`Only ${availableStock} left of "${displayName}"`, 400);
       }
+
       const price = Number(variant ? variant.price : product.price);
       const lineTotal = Math.round(price * input.quantity * 100) / 100;
       subtotal = Math.round((subtotal + lineTotal) * 100) / 100;
+
       return {
         productId: product.id,
         variantId: variant?.id ?? null,
+        stageOptionIds,
         categoryId: product.categoryId,
         name: displayName,
         sku: variant?.sku ?? product.sku,
@@ -288,11 +340,9 @@ export class OrderService {
     const existing = await prisma.userProfile.findUnique({
       where: { email: email.toLowerCase() },
     });
-
     if (existing) {
       return { userId: existing.id, created: false, emailSent: false };
     }
-
     const newProfile = await prisma.userProfile.create({
       data: {
         id: randomUUID(),
@@ -300,7 +350,6 @@ export class OrderService {
         fullName,
       },
     });
-
     return { userId: newProfile.id, created: true, emailSent: false };
   }
 
