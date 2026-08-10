@@ -97,6 +97,8 @@ export interface ProductDto {
   variants: ProductVariantDto[];
   avgRating: number;
   reviewCount: number;
+  hasMultiStageVariants: boolean;
+  variantStages: VariantStageDto[];
 }
 
 export interface ProductSuggestionDto {
@@ -228,4 +230,22 @@ export interface CheckoutResultDto {
   order: OrderDto;
   createdAccount: boolean;
   emailVerificationSent: boolean;
+}
+
+export interface VariantStageOptionDto {
+  id: string;
+  label: string;
+  selectCount: number | null;
+  priceOverride: number | null;
+  stockQuantity: number;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface VariantStageDto {
+  id: string;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: VariantStageOptionDto[];
 }

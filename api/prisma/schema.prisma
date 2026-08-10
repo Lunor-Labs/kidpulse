@@ -57,6 +57,8 @@ model Product {
   quantityDiscounts QuantityDiscount[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  hasMultiStageVariants Boolean        @default(false)
+  variantStages         VariantStage[]
 
   @@index([categoryId])
   @@index([deletedAt])
@@ -433,4 +435,37 @@ model PasswordResetToken {
   @@index([email])
   @@index([token])
   @@map("password_reset_tokens")
+}
+
+model VariantStage {
+  id           String               @id @default(cuid())
+  productId    String
+  product      Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stageOrder   Int
+  label        String
+  maxSelect    Int                  @default(1)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  options      VariantStageOption[]
+
+  @@unique([productId, stageOrder])
+  @@index([productId])
+  @@map("variant_stages")
+}
+
+model VariantStageOption {
+  id            String       @id @default(cuid())
+  stageId       String
+  stage         VariantStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  label         String
+  selectCount   Int?
+  priceOverride Decimal?     @db.Decimal(10, 2)
+  stockQuantity Int          @default(0)
+  sortOrder     Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([stageId, isActive])
+  @@map("variant_stage_options")
 }
