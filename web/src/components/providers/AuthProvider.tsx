@@ -5,21 +5,32 @@ import { useAuthStore, type SessionRole, type SessionUser } from '@/stores/authS
 import { useWishlistStore } from '@/stores/wishlistStore';
 import { apiClient } from '@/lib/apiClient';
 
-// The browser can't verify the token's signature — that would mean shipping the
-// HMAC key to every visitor. `/me` is the authority: it 401s on a bad or expired
-// token, which is the same signal jwtVerify() used to give us.
-async function fetchSession(token: string): Promise<SessionUser> {
-  const { user } = await apiClient.get<{ user: SessionUser }>('/api/v1/auth/me', token);
-  return {
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName ?? null,
-    role: normalizeRole(user.role),
-  };
-}
-
 function normalizeRole(role: unknown): SessionRole {
   return role === 'staff' || role === 'super_admin' ? role : 'customer';
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split('=')[1]) : null;
+}
+
+function decodeToken(token: string): SessionUser | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Check if token is expired
+    if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+    return {
+      id: payload.sub,
+      email: payload.email,
+      fullName: payload.fullName ?? null,
+      role: normalizeRole(payload.role),
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchWishlistIds(token: string): Promise<string[]> {
@@ -30,12 +41,13 @@ async function fetchWishlistIds(token: string): Promise<string[]> {
   }
 }
 
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${name}=`));
-  return match ? decodeURIComponent(match.split('=')[1]) : null;
+async function validateToken(token: string): Promise<boolean> {
+  try {
+    await apiClient.get('/api/v1/auth/me', token);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -55,26 +67,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      try {
-        const user = await fetchSession(token);
-        if (ignore) return;
-
-        setSession(user, token);
-
-        const ids = await fetchWishlistIds(token);
-        if (!ignore) setWishlist(ids);
-      } catch {
-        if (ignore) return;
+      // Instantly populate store from JWT — no API call needed
+      const user = decodeToken(token);
+      if (!user) {
         clear();
         clearWishlist();
+        return;
       }
+
+      // Show user immediately
+      if (!ignore) setSession(user, token);
+
+      // Validate token in background + load wishlist
+      const [valid, ids] = await Promise.all([
+        validateToken(token),
+        fetchWishlistIds(token),
+      ]);
+
+      if (ignore) return;
+
+      if (!valid) {
+        // Token was rejected by server (revoked/expired server-side)
+        document.cookie = 'auth_token=; path=/; max-age=0; SameSite=Lax';
+        clear();
+        clearWishlist();
+        return;
+      }
+
+      setWishlist(ids);
     }
 
     init();
 
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [setSession, clear, setWishlist, clearWishlist]);
 
   return <>{children}</>;

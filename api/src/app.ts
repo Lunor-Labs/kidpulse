@@ -13,6 +13,7 @@ import { checkoutRouter } from './routes/checkout';
 import { paymentsRouter } from './routes/payments';
 import { productBannerRouter } from './routes/productBanners';
 import { productRouter } from './routes/products';
+import { mediaRouter } from './routes/media';
 
 export const app = express();
 
@@ -73,5 +74,6 @@ app.use('/api/v1/admin', adminLimiter, adminRouter);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+app.use('/media', mediaRouter);
 
 app.use(errorHandler);

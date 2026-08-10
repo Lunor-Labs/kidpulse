@@ -10,6 +10,7 @@ export interface AdminNavLink {
   href: string;
   label: string;
   superAdminOnly?: boolean;
+  dropdownOnly?: boolean;
 }
 
 export const ADMIN_NAV_LINKS: AdminNavLink[] = [
@@ -17,15 +18,15 @@ export const ADMIN_NAV_LINKS: AdminNavLink[] = [
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/products', label: 'Products' },
   { href: '/admin/categories', label: 'Categories' },
-  { href: '/admin/banners', label: 'Home banners' },
-  { href: '/admin/product-banners', label: 'Product banners' },
-  { href: '/admin/coupons', label: 'Coupons' },
-  { href: '/admin/discounts', label: 'Auto-discounts' },
+  { href: '/admin/banners', label: 'Home banners', dropdownOnly: true },
+  { href: '/admin/product-banners', label: 'Product banners', dropdownOnly: true },
+  { href: '/admin/coupons', label: 'Coupons', dropdownOnly: true },
+  { href: '/admin/discounts', label: 'Auto-discounts', dropdownOnly: true },
   { href: '/admin/customers', label: 'Customers' },
-  { href: '/admin/analytics', label: 'Analytics' },
-  { href: '/admin/settings', label: 'Settings' },
-  { href: '/admin/staff', label: 'Staff', superAdminOnly: true },
-  { href: '/admin/action-log', label: 'Action log', superAdminOnly: true },
+  { href: '/admin/analytics', label: 'Analytics', dropdownOnly: true },
+  { href: '/admin/settings', label: 'Settings', dropdownOnly: true },
+  { href: '/admin/staff', label: 'Staff', superAdminOnly: true, dropdownOnly: true },
+  { href: '/admin/action-log', label: 'Action log', superAdminOnly: true, dropdownOnly: true },
 ];
 
 export const ACCOUNT_NAV_LINKS = [

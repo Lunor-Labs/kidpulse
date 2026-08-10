@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET ?? process.env.JWT_SECRET;
+
+console.log('JWT_SECRET available:', !!JWT_SECRET, typeof JWT_SECRET);
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
