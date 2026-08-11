@@ -54,6 +54,7 @@ export interface Product {
   sku: string;
   stockQuantity: number;
   lowStockAlert?: number;
+  shippingCost?: number | null;
   ageRangeMin: number | null;
   ageRangeMax: number | null;
   isFeatured: boolean;

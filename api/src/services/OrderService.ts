@@ -10,9 +10,6 @@ import { PromotionsService } from './PromotionsService';
 import { EmailService } from './EmailService';
 import { ProfileService } from './ProfileService';
 
-const SHIPPING_FLAT_LKR = 350;
-const FREE_SHIPPING_THRESHOLD_LKR = 5000;
-
 type FullOrderRow = NonNullable<Awaited<ReturnType<OrderService['findOrderWithItems']>>>;
 
 export class OrderService {
@@ -28,6 +25,14 @@ export class OrderService {
   ): Promise<CheckoutResultDto> {
     const shipping = await this.resolveShipping(user, input);
     const priced = await this.priceItems(input.items);
+
+    // Load global shipping settings
+    const adminSettings = await prisma.adminSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { defaultShippingCost: true, freeShippingThreshold: true },
+    });
+    const DEFAULT_SHIPPING = Number(adminSettings?.defaultShippingCost ?? 350);
+    const FREE_THRESHOLD = Number(adminSettings?.freeShippingThreshold ?? 5000);
 
     const groupedForPromotions = new Map<string, { productId: string; categoryId: string; price: number; quantity: number; lineTotal: number }>();
     for (const item of priced.items) {
@@ -54,8 +59,21 @@ export class OrderService {
     const itemDiscountAmount = pricing.autoDiscountAmount + pricing.quantityDiscountAmount;
     const discountAmount = pricing.totalDiscount;
     const subtotalAfterDiscount = Math.max(0, priced.subtotal - discountAmount);
-    const shippingAmount =
-      subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD_LKR ? 0 : SHIPPING_FLAT_LKR;
+
+    // Shipping: free if subtotal meets threshold, otherwise use highest product-level
+    // shipping cost among cart items, falling back to global default
+    let shippingAmount: number;
+    if (subtotalAfterDiscount >= FREE_THRESHOLD) {
+      shippingAmount = 0;
+    } else {
+      const productShippingCosts = priced.items
+        .map((i) => i.shippingCost)
+        .filter((c): c is number => c !== null && c !== undefined);
+      shippingAmount = productShippingCosts.length > 0
+        ? Math.max(...productShippingCosts)
+        : DEFAULT_SHIPPING;
+    }
+
     const total = subtotalAfterDiscount + shippingAmount;
 
     let effectiveUser = user;
@@ -118,7 +136,7 @@ export class OrderService {
           include: { items: { include: { product: { select: { slug: true } } } } },
         });
 
-        // ── Standard variant / product stock decrement ──
+        // Standard variant / product stock decrement
         const productsWithVariantLines = new Set<string>();
         for (const item of priced.items) {
           if (item.variantId) {
@@ -128,7 +146,6 @@ export class OrderService {
             });
             productsWithVariantLines.add(item.productId);
           } else if (!item.stageOptionIds?.length) {
-            // Only decrement product-level stock for non-multi-stage items
             await tx.product.update({
               where: { id: item.productId },
               data: { stockQuantity: { decrement: item.quantity } },
@@ -148,8 +165,7 @@ export class OrderService {
           });
         }
 
-        // ── Multi-stage option stock decrement ──
-        // Decrement each selected Stage-2 character option by the order quantity
+        // Multi-stage option stock decrement
         for (const item of priced.items) {
           if (item.stageOptionIds && item.stageOptionIds.length > 0) {
             for (const optionId of item.stageOptionIds) {
@@ -178,11 +194,7 @@ export class OrderService {
         logger.warn({ err }, 'Low-stock alert email failed');
       });
 
-      return {
-        order: dto,
-        createdAccount,
-        emailVerificationSent,
-      };
+      return { order: dto, createdAccount, emailVerificationSent };
     } catch (error) {
       logger.error({ error, userId: effectiveUser?.id }, 'Order creation failed');
       throw new AppError('Unable to place order', 500);
@@ -223,7 +235,6 @@ export class OrderService {
     });
     const byId = new Map(products.map((p) => [p.id, p]));
 
-    // Validate stage option ids exist and have enough stock
     const allStageOptionIds = items
       .flatMap((i) => i.stageOptionIds ?? [])
       .filter(Boolean);
@@ -250,7 +261,6 @@ export class OrderService {
         throw new AppError(`Selected option of "${product.name}" is no longer available`, 400);
       }
 
-      // For multi-stage items, validate each selected stage option stock
       const stageOptionIds = input.stageOptionIds ?? null;
       if (stageOptionIds && stageOptionIds.length > 0) {
         for (const optionId of stageOptionIds) {
@@ -290,6 +300,9 @@ export class OrderService {
         lineTotal,
         stockBefore: availableStock,
         lowStockAlert: product.lowStockAlert,
+        shippingCost: (product as any).shippingCost === null || (product as any).shippingCost === undefined
+          ? null
+          : Number((product as any).shippingCost),
       };
     });
     return { subtotal, items: priced };
@@ -378,10 +391,7 @@ export class OrderService {
     const settings = await prisma.adminSettings.findUnique({ where: { id: 'singleton' } });
     const to = settings?.supportEmail;
     if (!to) {
-      logger.info(
-        { items: newlyCrossed },
-        'Low stock detected but no supportEmail configured — alert skipped'
-      );
+      logger.info({ items: newlyCrossed }, 'Low stock detected but no supportEmail configured — alert skipped');
       return;
     }
     await this.emailService.sendLowStockAlert(to, newlyCrossed);
@@ -420,9 +430,19 @@ export class OrderService {
     }
 
     if (createdAccount) {
+      const token = randomUUID();
+      const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+      await prisma.passwordResetToken.create({
+        data: {
+          email: order.ship.email.toLowerCase(),
+          token,
+          expiresAt,
+        },
+      });
+      const resetUrl = `${env.WEB_BASE_URL}/reset-password?token=${token}`;
       await this.emailService.sendWelcomeGuest(order.ship.email, {
         fullName: order.ship.fullName,
-        loginUrl: `${env.WEB_BASE_URL}/login`,
+        loginUrl: resetUrl,
       });
     }
   }

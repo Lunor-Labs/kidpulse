@@ -60,6 +60,7 @@ export interface AdminProduct {
   sku: string;
   stockQuantity: number;
   lowStockAlert: number;
+  shippingCost: number | null;
   tags: string[];
   ageRangeMin: number | null;
   ageRangeMax: number | null;
@@ -125,6 +126,7 @@ export interface ProductFormValues {
   sku: string;
   stockQuantity: number;
   lowStockAlert: number;
+  shippingCost: number | null;
   tags: string[];
   ageRangeMin: number | null;
   ageRangeMax: number | null;
@@ -218,6 +220,8 @@ export interface AdminSettings {
   whatsappNumber: string | null;
   bankTransferDeadlineDays: number;
   supportEmail: string | null;
+  defaultShippingCost: number;
+  freeShippingThreshold: number;
   updatedAt: string;
 }
 
@@ -619,4 +623,6 @@ export interface AdminSettingsFormValues {
   whatsappNumber: string | null;
   bankTransferDeadlineDays: number;
   supportEmail: string | null;
+  defaultShippingCost: number;
+  freeShippingThreshold: number;
 }

@@ -66,6 +66,7 @@ export const productUpsertSchema = z.object({
   sku: z.string().trim().min(1).max(80),
   stockQuantity: z.number().int().min(0).max(1_000_000),
   lowStockAlert: z.number().int().min(0).max(1_000_000).optional(),
+  shippingCost: z.number().nonnegative().max(10_000_000).nullable().optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   ageRangeMin: z.number().int().min(0).max(18).nullable().optional(),
   ageRangeMax: z.number().int().min(0).max(18).nullable().optional(),
@@ -91,7 +92,6 @@ export const bannerUpsertSchema = z.object({
   sortOrder: z.number().int().min(0).max(9999).optional(),
   isActive: z.boolean().optional(),
 });
-
 export type BannerUpsertInput = z.infer<typeof bannerUpsertSchema>;
 
 export const productBannerUpsertSchema = z.object({
@@ -106,7 +106,6 @@ export const productBannerUpsertSchema = z.object({
   sortOrder: z.number().int().min(0).max(9999).optional(),
   isActive: z.boolean().optional(),
 });
-
 export type ProductBannerUpsertInput = z.infer<typeof productBannerUpsertSchema>;
 
 export const couponUpsertSchema = z.object({
@@ -120,7 +119,6 @@ export const couponUpsertSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
   isActive: z.boolean().optional(),
 });
-
 export type CouponUpsertInput = z.infer<typeof couponUpsertSchema>;
 
 export const autoDiscountUpsertSchema = z.object({
@@ -161,8 +159,9 @@ export const adminSettingsSchema = z.object({
   whatsappNumber: z.string().trim().max(32).nullable().optional(),
   bankTransferDeadlineDays: z.number().int().min(1).max(30).optional(),
   supportEmail: z.string().trim().email().nullable().optional(),
+  defaultShippingCost: z.number().nonnegative().max(10_000_000).optional(),
+  freeShippingThreshold: z.number().nonnegative().max(10_000_000).optional(),
 });
-
 export type AdminSettingsInput = z.infer<typeof adminSettingsSchema>;
 
 export const orderStatusUpdateSchema = z.object({
@@ -227,8 +226,6 @@ export const imageUploadSchema = z.object({
     .max(6_000_000, 'Image is too large (max ~4MB)'),
   folder: z.enum(['products', 'categories', 'banners', 'product-banners']).default('products'),
 });
-
-
 
 export type CategoryUpsertInput = z.infer<typeof categoryUpsertSchema>;
 export type ProductUpsertInput = z.infer<typeof productUpsertSchema>;

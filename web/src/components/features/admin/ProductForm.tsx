@@ -27,6 +27,7 @@ function toValues(p?: AdminProduct): ProductFormValues {
     sku: p?.sku ?? '',
     stockQuantity: p?.stockQuantity ?? 0,
     lowStockAlert: p?.lowStockAlert ?? 5,
+    shippingCost: p?.shippingCost ?? null,
     tags: p?.tags ?? [],
     ageRangeMin: p?.ageRangeMin ?? null,
     ageRangeMax: p?.ageRangeMax ?? null,
@@ -129,6 +130,7 @@ export function ProductForm({ initial }: ProductFormProps) {
               .filter(Boolean)
           ),
         ],
+        shippingCost: values.shippingCost,
         hasMultiStageVariants: values.hasMultiStageVariants,
         variantStages: values.hasMultiStageVariants ? values.variantStages : [],
       };
@@ -230,7 +232,7 @@ export function ProductForm({ initial }: ProductFormProps) {
         </FormField>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <FormField label="Stock quantity" htmlFor="p-stock" required>
           <input
             id="p-stock"
@@ -250,6 +252,20 @@ export function ProductForm({ initial }: ProductFormProps) {
             className={inputClass}
             value={values.lowStockAlert}
             onChange={(e) => update('lowStockAlert', Number(e.target.value) || 0)}
+          />
+        </FormField>
+        <FormField label="Shipping cost (LKR)" htmlFor="p-shipping" hint="Leave blank to use store default">
+          <input
+            id="p-shipping"
+            type="number"
+            min={0}
+            step="0.01"
+            className={inputClass}
+            value={values.shippingCost ?? ''}
+            onChange={(e) =>
+              update('shippingCost', e.target.value === '' ? null : Number(e.target.value))
+            }
+            placeholder="Store default"
           />
         </FormField>
         <FormField label="Category" htmlFor="p-cat" required>
@@ -347,7 +363,6 @@ export function ProductForm({ initial }: ProductFormProps) {
         />
       </div>
 
-      {/* Variants & Selections */}
       <div className="rounded-[12px] border border-brand-line p-4 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
