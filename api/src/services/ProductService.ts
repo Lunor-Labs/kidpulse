@@ -99,6 +99,9 @@ function toDto(
       })),
     avgRating: Math.round(rating.avg * 10) / 10,
     reviewCount: rating.count,
+    shippingCost: (p as any).shippingCost === null || (p as any).shippingCost === undefined
+      ? null
+      : Number((p as any).shippingCost),
     hasMultiStageVariants: (p as any).hasMultiStageVariants ?? false,
     variantStages: ((p as any).variantStages ?? []).map(mapStage),
   };
@@ -189,6 +192,7 @@ export class ProductService {
         metaDescription: input.metaDescription ?? null,
         categoryId: input.categoryId,
         hasMultiStageVariants: input.hasMultiStageVariants ?? false,
+        shippingCost: input.shippingCost ?? null,
       },
       input.images.map((img, i) => ({
         url: img.url,
@@ -234,6 +238,7 @@ export class ProductService {
         metaDescription: input.metaDescription ?? null,
         categoryId: input.categoryId,
         hasMultiStageVariants: input.hasMultiStageVariants ?? false,
+        shippingCost: input.shippingCost ?? null,   
       },
       input.images.map((img, i) => ({
         url: img.url,

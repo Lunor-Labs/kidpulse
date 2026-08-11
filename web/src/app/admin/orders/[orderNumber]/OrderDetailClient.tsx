@@ -352,6 +352,15 @@ export function OrderDetailClient({ orderNumber }: { orderNumber: string }) {
         busy={busy === 'shipping'}
       />
 
+      {/* ── Order Notes ── */}
+      {order.notes && (
+        <AccountCard title="Order notes">
+          <p className="rounded-[10px] border border-brand-line bg-brand-cream/30 px-4 py-3 text-[0.9rem] text-brand-ink">
+            {order.notes}
+          </p>
+        </AccountCard>
+      )}
+
       <AccountCard title="Payment history">
         {order.payments.length === 0 ? (
           <p className="text-[0.9rem] text-brand-ink-soft">No payment attempts recorded.</p>

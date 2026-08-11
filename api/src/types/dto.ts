@@ -97,6 +97,7 @@ export interface ProductDto {
   variants: ProductVariantDto[];
   avgRating: number;
   reviewCount: number;
+  shippingCost: number | null;
   hasMultiStageVariants: boolean;
   variantStages: VariantStageDto[];
 }
