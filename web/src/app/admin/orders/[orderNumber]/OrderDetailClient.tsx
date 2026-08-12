@@ -29,7 +29,7 @@ const STATUS_TONE: Record<string, string> = {
   FAILED: 'bg-brand-berry/15 text-brand-berry',
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_BASE = process.env.API_URL ?? 'http://localhost:4000';
 
 function money(v: number, currency: string) {
   return `${currency} ${v.toLocaleString('en-LK', {
@@ -351,6 +351,15 @@ export function OrderDetailClient({ orderNumber }: { orderNumber: string }) {
         onSave={handleShippingSave}
         busy={busy === 'shipping'}
       />
+
+      {/* ── Order Notes ── */}
+      {order.notes && (
+        <AccountCard title="Order notes">
+          <p className="rounded-[10px] border border-brand-line bg-brand-cream/30 px-4 py-3 text-[0.9rem] text-brand-ink">
+            {order.notes}
+          </p>
+        </AccountCard>
+      )}
 
       <AccountCard title="Payment history">
         {order.payments.length === 0 ? (

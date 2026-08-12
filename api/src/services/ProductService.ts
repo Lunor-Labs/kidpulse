@@ -1,3 +1,4 @@
+import { prisma } from '../lib/prisma';
 import { AppError } from '../lib/AppError';
 import { logger } from '../lib/logger';
 import { ProductRepository } from '../repositories/ProductRepository';
@@ -6,6 +7,8 @@ import {
   AdminProductDto,
   ProductDto,
   ProductSuggestionDto,
+  VariantStageDto,
+  VariantStageOptionDto,
 } from '../types/dto';
 import { ProductUpsertInput, VariantInput } from '../types/adminSchemas';
 import type { VariantWriteInput } from '../repositories/ProductRepository';
@@ -15,6 +18,42 @@ type ProductRow = Awaited<ReturnType<ProductRepository['findMany']>>[number];
 
 function normalizeTags(tags: string[]): string[] {
   return [...new Set(tags.map((t) => t.trim().toLowerCase()).filter(Boolean))];
+}
+
+function mapStageOption(o: {
+  id: string;
+  label: string;
+  selectCount: number | null;
+  priceOverride: unknown;
+  stockQuantity: number;
+  sortOrder: number;
+  isActive: boolean;
+}): VariantStageOptionDto {
+  return {
+    id: o.id,
+    label: o.label,
+    selectCount: o.selectCount ?? null,
+    priceOverride: o.priceOverride === null ? null : Number(o.priceOverride),
+    stockQuantity: o.stockQuantity,
+    sortOrder: o.sortOrder,
+    isActive: o.isActive,
+  };
+}
+
+function mapStage(s: {
+  id: string;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: Parameters<typeof mapStageOption>[0][];
+}): VariantStageDto {
+  return {
+    id: s.id,
+    stageOrder: s.stageOrder,
+    label: s.label,
+    maxSelect: s.maxSelect,
+    options: s.options.map(mapStageOption),
+  };
 }
 
 function toDto(
@@ -60,6 +99,11 @@ function toDto(
       })),
     avgRating: Math.round(rating.avg * 10) / 10,
     reviewCount: rating.count,
+    shippingCost: (p as any).shippingCost === null || (p as any).shippingCost === undefined
+      ? null
+      : Number((p as any).shippingCost),
+    hasMultiStageVariants: (p as any).hasMultiStageVariants ?? false,
+    variantStages: ((p as any).variantStages ?? []).map(mapStage),
   };
 }
 
@@ -147,6 +191,8 @@ export class ProductService {
         metaTitle: input.metaTitle ?? null,
         metaDescription: input.metaDescription ?? null,
         categoryId: input.categoryId,
+        hasMultiStageVariants: input.hasMultiStageVariants ?? false,
+        shippingCost: input.shippingCost ?? null,
       },
       input.images.map((img, i) => ({
         url: img.url,
@@ -155,6 +201,9 @@ export class ProductService {
       })),
       input.variants.map((v, i) => this.toVariantWrite(v, i))
     );
+    if (input.hasMultiStageVariants && input.variantStages?.length) {
+      await this.productRepo.updateVariantStages(created.id, input.variantStages);
+    }
     return this.getForAdmin(created.id);
   }
 
@@ -188,6 +237,8 @@ export class ProductService {
         metaTitle: input.metaTitle ?? null,
         metaDescription: input.metaDescription ?? null,
         categoryId: input.categoryId,
+        hasMultiStageVariants: input.hasMultiStageVariants ?? false,
+        shippingCost: input.shippingCost ?? null,   
       },
       input.images.map((img, i) => ({
         url: img.url,
@@ -196,6 +247,11 @@ export class ProductService {
       })),
       input.variants.map((v, i) => this.toVariantWrite(v, i))
     );
+    if (input.hasMultiStageVariants && input.variantStages?.length) {
+      await this.productRepo.updateVariantStages(id, input.variantStages);
+    } else if (!input.hasMultiStageVariants) {
+      await prisma.variantStage.deleteMany({ where: { productId: id } });
+    }
     return this.getForAdmin(id);
   }
 

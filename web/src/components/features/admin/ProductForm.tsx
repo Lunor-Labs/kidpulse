@@ -7,14 +7,11 @@ import { toast } from 'sonner';
 import { FormField, inputClass } from './FormField';
 import { ProductImageManager } from './ProductImageManager';
 import { ProductVariantManager } from './ProductVariantManager';
+import { MultiStageVariantManager, type VariantStageFormValue } from './MultiStageVariantManager';
 import { adminApi } from '@/lib/adminApi';
 import { slugify } from '@/lib/slug';
 import { useAuthStore } from '@/stores/authStore';
-import type {
-  AdminCategory,
-  AdminProduct,
-  ProductFormValues,
-} from '@/types/admin';
+import type { AdminCategory, AdminProduct, ProductFormValues } from '@/types/admin';
 
 interface ProductFormProps {
   initial?: AdminProduct;
@@ -30,6 +27,7 @@ function toValues(p?: AdminProduct): ProductFormValues {
     sku: p?.sku ?? '',
     stockQuantity: p?.stockQuantity ?? 0,
     lowStockAlert: p?.lowStockAlert ?? 5,
+    shippingCost: p?.shippingCost ?? null,
     tags: p?.tags ?? [],
     ageRangeMin: p?.ageRangeMin ?? null,
     ageRangeMax: p?.ageRangeMax ?? null,
@@ -56,6 +54,23 @@ function toValues(p?: AdminProduct): ProductFormValues {
         imageUrl: v.imageUrl,
         sortOrder: v.sortOrder ?? i,
         isActive: v.isActive,
+      })) ?? [],
+    hasMultiStageVariants: p?.hasMultiStageVariants ?? false,
+    variantStages:
+      p?.variantStages?.map((s) => ({
+        id: s.id,
+        stageOrder: s.stageOrder,
+        label: s.label,
+        maxSelect: s.maxSelect,
+        options: s.options.map((o) => ({
+          id: o.id,
+          label: o.label,
+          selectCount: o.selectCount,
+          priceOverride: o.priceOverride,
+          stockQuantity: o.stockQuantity,
+          sortOrder: o.sortOrder,
+          isActive: o.isActive,
+        })),
       })) ?? [],
   };
 }
@@ -115,6 +130,9 @@ export function ProductForm({ initial }: ProductFormProps) {
               .filter(Boolean)
           ),
         ],
+        shippingCost: values.shippingCost,
+        hasMultiStageVariants: values.hasMultiStageVariants,
+        variantStages: values.hasMultiStageVariants ? values.variantStages : [],
       };
       if (initial) {
         await adminApi.updateProduct(initial.id, payload, token);
@@ -214,7 +232,7 @@ export function ProductForm({ initial }: ProductFormProps) {
         </FormField>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <FormField label="Stock quantity" htmlFor="p-stock" required>
           <input
             id="p-stock"
@@ -234,6 +252,20 @@ export function ProductForm({ initial }: ProductFormProps) {
             className={inputClass}
             value={values.lowStockAlert}
             onChange={(e) => update('lowStockAlert', Number(e.target.value) || 0)}
+          />
+        </FormField>
+        <FormField label="Shipping cost (LKR)" htmlFor="p-shipping" hint="Leave blank to use store default">
+          <input
+            id="p-shipping"
+            type="number"
+            min={0}
+            step="0.01"
+            className={inputClass}
+            value={values.shippingCost ?? ''}
+            onChange={(e) =>
+              update('shippingCost', e.target.value === '' ? null : Number(e.target.value))
+            }
+            placeholder="Store default"
           />
         </FormField>
         <FormField label="Category" htmlFor="p-cat" required>
@@ -331,17 +363,51 @@ export function ProductForm({ initial }: ProductFormProps) {
         />
       </div>
 
-      <div>
-        <div className="mb-2 text-[0.82rem] font-semibold text-brand-ink">Variants</div>
-        <p className="mb-2 text-[0.76rem] text-brand-ink-soft">
-          Each variant has its own price and stock. When variants exist, product stock is
-          kept in sync automatically. Removing a variant hides it without breaking past
-          orders.
-        </p>
-        <ProductVariantManager
-          value={values.variants}
-          onChange={(variants) => update('variants', variants)}
-        />
+      <div className="rounded-[12px] border border-brand-line p-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[0.86rem] font-semibold text-brand-ink">Variants &amp; Selections</div>
+            <p className="mt-1 text-[0.76rem] text-brand-ink-soft">
+              Use <strong>Multi-stage</strong> for products where customers first pick a pack size then
+              choose individual items (e.g. Character Packs, Theatre Shows). Use{' '}
+              <strong>Standard variants</strong> for simple size / colour options.
+            </p>
+          </div>
+          <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[0.82rem] font-semibold text-brand-ink">
+            <span className="relative inline-block h-6 w-11">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                checked={values.hasMultiStageVariants}
+                onChange={(e) => {
+                  update('hasMultiStageVariants', e.target.checked);
+                  if (e.target.checked) update('variants', []);
+                }}
+              />
+              <span className="absolute inset-0 rounded-full bg-brand-line transition-colors peer-checked:bg-brand-indigo" />
+              <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+            </span>
+            Multi-stage
+          </label>
+        </div>
+
+        {values.hasMultiStageVariants ? (
+          <MultiStageVariantManager
+            value={values.variantStages as VariantStageFormValue[]}
+            onChange={(stages) => update('variantStages', stages)}
+          />
+        ) : (
+          <>
+            <p className="text-[0.76rem] text-brand-ink-soft">
+              Each variant has its own price and stock. When variants exist, product stock is kept in
+              sync automatically. Removing a variant hides it without breaking past orders.
+            </p>
+            <ProductVariantManager
+              value={values.variants}
+              onChange={(variants) => update('variants', variants)}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

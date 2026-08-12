@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { apiLogin } from '@/lib/api';
 import { PasswordField } from '@/components/features/auth/PasswordField';
-import { GoogleButton } from '@/components/features/auth/GoogleButton';
+import { useAuthStore } from '@/stores/authStore';
 
 export function LoginForm() {
   const router = useRouter();
@@ -16,31 +16,38 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handle(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (err) throw err;
-      const role = (data.user?.app_metadata as { role?: string } | undefined)?.role;
-      const isAdmin = role === 'staff' || role === 'super_admin';
-      const target = nextParam || (isAdmin ? '/admin' : '/');
-      router.push(target);
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Sign-in failed');
-      setLoading(false);
-    }
+async function handle(e: React.FormEvent) {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  try {
+    const result = await apiLogin(email.trim(), password);
+    document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+    
+    // Decode JWT payload to get user info
+    const payload = JSON.parse(atob(result.token.split('.')[1]));
+    useAuthStore.getState().setSession(
+      {
+        id: payload.sub,
+        email: payload.email,
+        fullName: payload.fullName ?? null,
+        role: result.role as any,
+      },
+      result.token
+    );
+
+    const isAdmin = result.role === 'staff' || result.role === 'super_admin';
+    const target = nextParam || (isAdmin ? '/admin' : '/');
+    router.push(target);
+    setTimeout(() => router.refresh(), 100);
+  } catch (e) {
+    setError(e instanceof Error ? e.message : 'Sign-in failed');
+    setLoading(false);
   }
+}
 
   return (
     <>
-      <GoogleButton next={nextParam ?? undefined} />
       <div className="my-5 flex items-center gap-3 text-[0.75rem] uppercase tracking-widest text-brand-ink-soft">
         <span className="flex-1 border-t border-brand-line" />
         or

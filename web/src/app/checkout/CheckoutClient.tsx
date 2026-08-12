@@ -37,9 +37,6 @@ function submitPayHereForm(fields: PayHereStartFields): void {
   form.submit();
 }
 
-const SHIPPING_FLAT_LKR = 350;
-const FREE_SHIPPING_THRESHOLD_LKR = 5000;
-
 interface ShippingForm {
   fullName: string;
   phone: string;
@@ -77,6 +74,8 @@ function formatLKR(v: number): string {
 const inputClass =
   'w-full rounded-[10px] border border-brand-line bg-white px-3 py-2 text-[0.9rem] text-brand-ink focus:border-brand-indigo focus:outline-none';
 
+const API_BASE = process.env.API_URL ?? 'http://localhost:4000';
+
 export function CheckoutClient() {
   const mounted = useHasHydrated();
   const router = useRouter();
@@ -97,11 +96,39 @@ export function CheckoutClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Shipping settings from admin
+  const [defaultShipping, setDefaultShipping] = useState(350);
+  const [freeThreshold, setFreeThreshold] = useState(5000);
+
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const discountAmount = coupon?.discountAmount ?? 0;
+
+  // Estimate shipping using highest product-level shipping cost or store default
+  // This mirrors the backend logic exactly
+  const productShippingCosts = items
+    .map((i) => (i as any).shippingCost as number | null | undefined)
+    .filter((c): c is number => c !== null && c !== undefined);
+  const estimatedShippingRate =
+    productShippingCosts.length > 0
+      ? Math.max(...productShippingCosts)
+      : defaultShipping;
   const shippingAmount =
-    subtotal - discountAmount >= FREE_SHIPPING_THRESHOLD_LKR ? 0 : SHIPPING_FLAT_LKR;
+    subtotal - discountAmount >= freeThreshold ? 0 : estimatedShippingRate;
   const total = Math.max(0, subtotal - discountAmount) + shippingAmount;
+
+  // Load shipping settings
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/admin/settings`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        const data = res.data;
+        if (data?.defaultShippingCost != null) setDefaultShipping(Number(data.defaultShippingCost));
+        if (data?.freeShippingThreshold != null) setFreeThreshold(Number(data.freeShippingThreshold));
+      })
+      .catch(() => {/* use defaults */});
+  }, [token]);
 
   useEffect(() => {
     if (!hydrated || !token) return;
@@ -112,9 +139,7 @@ export function CheckoutClient() {
         const def = data.find((a) => a.isDefault) ?? data[0];
         if (def) setSelectedAddressId(def.id);
       })
-      .catch(() => {
-        /* ignore */
-      });
+      .catch(() => {/* ignore */});
   }, [token, hydrated]);
 
   useEffect(() => {
@@ -149,6 +174,7 @@ export function CheckoutClient() {
       items: items.map((i) => ({
         productId: i.productId,
         variantId: i.variantId ?? null,
+        stageOptionIds: i.stageOptionIds ?? null,
         quantity: i.quantity,
       })),
       paymentMethod,
@@ -211,7 +237,6 @@ export function CheckoutClient() {
       const params = new URLSearchParams();
       if (result.createdAccount) params.set('newAccount', '1');
       const qs = params.toString() ? `?${params}` : '';
-
       if (method === 'PAYHERE') {
         try {
           const fields = await storefrontApi.startPayHere(orderNumber, token);
@@ -345,9 +370,7 @@ export function CheckoutClient() {
                     type="email"
                     className={inputClass}
                     value={shipping.email}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, email: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, email: e.target.value }))}
                     required
                   />
                 </div>
@@ -358,9 +381,7 @@ export function CheckoutClient() {
                   <input
                     className={inputClass}
                     value={shipping.fullName}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, fullName: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, fullName: e.target.value }))}
                     required
                   />
                 </div>
@@ -371,9 +392,7 @@ export function CheckoutClient() {
                   <input
                     className={inputClass}
                     value={shipping.phone}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, phone: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, phone: e.target.value }))}
                     required
                   />
                 </div>
@@ -384,9 +403,7 @@ export function CheckoutClient() {
                   <input
                     className={inputClass}
                     value={shipping.addressLine1}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, addressLine1: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, addressLine1: e.target.value }))}
                     required
                   />
                 </div>
@@ -397,9 +414,7 @@ export function CheckoutClient() {
                   <input
                     className={inputClass}
                     value={shipping.addressLine2}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, addressLine2: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, addressLine2: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -420,9 +435,7 @@ export function CheckoutClient() {
                   <input
                     className={inputClass}
                     value={shipping.district}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, district: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, district: e.target.value }))}
                     required
                   />
                 </div>
@@ -433,9 +446,7 @@ export function CheckoutClient() {
                   <input
                     className={inputClass}
                     value={shipping.postalCode}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, postalCode: e.target.value }))
-                    }
+                    onChange={(e) => setShipping((s) => ({ ...s, postalCode: e.target.value }))}
                   />
                 </div>
               </div>
@@ -507,7 +518,7 @@ export function CheckoutClient() {
           <ul className="mb-4 space-y-2">
             {items.map((item) => (
               <li
-                key={`${item.productId}:${item.variantId ?? ''}`}
+                key={`${item.productId}:${item.variantId ?? ''}:${(item.stageOptionIds ?? []).join(',')}`}
                 className="flex items-center gap-3"
               >
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/40">
@@ -578,8 +589,19 @@ export function CheckoutClient() {
             )}
             <div className="flex justify-between">
               <dt className="text-brand-ink-soft">Shipping</dt>
-              <dd>{shippingAmount === 0 ? 'Free' : formatLKR(shippingAmount)}</dd>
+              <dd>
+                {shippingAmount === 0 ? (
+                  <span className="text-brand-olive font-semibold">Free</span>
+                ) : (
+                  formatLKR(shippingAmount)
+                )}
+              </dd>
             </div>
+            {shippingAmount > 0 && subtotal - discountAmount < freeThreshold && (
+              <div className="text-[0.76rem] text-brand-ink-soft">
+                Add {formatLKR(freeThreshold - (subtotal - discountAmount))} more for free shipping
+              </div>
+            )}
             <div className="flex justify-between border-t border-brand-line pt-2 text-[1rem] font-bold">
               <dt>Total</dt>
               <dd>{formatLKR(total)}</dd>

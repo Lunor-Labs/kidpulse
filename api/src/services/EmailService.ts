@@ -274,14 +274,27 @@ export class EmailService {
     await this.send(to, `Low stock alert — ${items.length} product${items.length !== 1 ? 's' : ''}`, html);
   }
 
-  async sendWelcomeGuest(to: string, ctx: WelcomeGuestContext): Promise<void> {
-    const html = baseLayout(
-      'Welcome to KidPulse',
-      `<p>Hi ${escapeHtml(ctx.fullName)},</p>
-       <p>We've created a KidPulse account for you so you can track your order and shop faster next time.</p>
-       <p><a href="${ctx.loginUrl}" style="display:inline-block;background:#3f3d81;color:white;padding:10px 18px;border-radius:10px;text-decoration:none">Sign in with magic link</a></p>
-       <p style="font-size:12px;color:#8b8899">If you didn't check out on KidPulse, you can safely ignore this email.</p>`
-    );
-    await this.send(to, 'Welcome to KidPulse', html);
+async sendWelcomeGuest(to: string, ctx: WelcomeGuestContext): Promise<void> {
+  const html = baseLayout(
+    'Welcome to KidPulse',
+    `<p>Hi ${escapeHtml(ctx.fullName)},</p>
+     <p>We've created a KidPulse account for you so you can track your order and shop faster next time.</p>
+     <p>Click the button below to set your password and access your account:</p>
+     <p><a href="${ctx.loginUrl}" style="display:inline-block;background:#3f3d81;color:white;padding:10px 18px;border-radius:10px;text-decoration:none">Set your password</a></p>
+     <p style="font-size:13px;color:#8b8899">This link expires in 72 hours. Once you've set your password, you can log in at any time to view your orders.</p>
+     <p style="font-size:12px;color:#8b8899">If you didn't place an order on KidPulse, you can safely ignore this email.</p>`
+  );
+  await this.send(to, 'Welcome to KidPulse — set your password', html);
+}
+
+  async sendPasswordReset(to: string, ctx: { resetUrl: string }): Promise<void> {
+  const html = baseLayout(
+    'Reset your password',
+    `<p>Hi,</p>
+     <p>We received a request to reset the password for your KidPulse account.</p>
+     <p><a href="${ctx.resetUrl}" style="display:inline-block;background:#3f3d81;color:white;padding:10px 18px;border-radius:10px;text-decoration:none">Reset password</a></p>
+     <p style="font-size:13px;color:#8b8899">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>`
+  );
+  await this.send(to, 'Reset your KidPulse password', html);
   }
 }

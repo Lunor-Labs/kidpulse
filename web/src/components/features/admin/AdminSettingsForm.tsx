@@ -15,6 +15,8 @@ const EMPTY: AdminSettingsFormValues = {
   whatsappNumber: '',
   bankTransferDeadlineDays: 1,
   supportEmail: '',
+  defaultShippingCost: 350,
+  freeShippingThreshold: 5000,
 };
 
 function toValues(s: AdminSettings): AdminSettingsFormValues {
@@ -26,6 +28,8 @@ function toValues(s: AdminSettings): AdminSettingsFormValues {
     whatsappNumber: s.whatsappNumber ?? '',
     bankTransferDeadlineDays: s.bankTransferDeadlineDays ?? 1,
     supportEmail: s.supportEmail ?? '',
+    defaultShippingCost: s.defaultShippingCost ?? 350,
+    freeShippingThreshold: s.freeShippingThreshold ?? 5000,
   };
 }
 
@@ -69,6 +73,8 @@ export function AdminSettingsForm() {
         whatsappNumber: nullish(values.whatsappNumber),
         bankTransferDeadlineDays: values.bankTransferDeadlineDays,
         supportEmail: nullish(values.supportEmail),
+        defaultShippingCost: values.defaultShippingCost,
+        freeShippingThreshold: values.freeShippingThreshold,
       };
       const saved = await adminApi.updateSettings(payload, token);
       setValues(toValues(saved));
@@ -86,6 +92,37 @@ export function AdminSettingsForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Shipping */}
+      <div>
+        <h3 className="mb-2 font-semibold text-brand-ink">Shipping</h3>
+        <p className="mb-3 text-[0.82rem] text-brand-ink-soft">
+          Default rates applied at checkout. Individual products can override the shipping cost.
+        </p>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <FormField label="Default shipping cost (LKR)" hint="Applied when no product-level cost is set">
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              className={inputClass}
+              value={values.defaultShippingCost}
+              onChange={(e) => update('defaultShippingCost', Number(e.target.value) || 0)}
+            />
+          </FormField>
+          <FormField label="Free shipping threshold (LKR)" hint="Orders above this amount get free shipping">
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              className={inputClass}
+              value={values.freeShippingThreshold}
+              onChange={(e) => update('freeShippingThreshold', Number(e.target.value) || 0)}
+            />
+          </FormField>
+        </div>
+      </div>
+
+      {/* Bank transfer */}
       <div>
         <h3 className="mb-2 font-semibold text-brand-ink">Bank transfer</h3>
         <p className="mb-3 text-[0.82rem] text-brand-ink-soft">
@@ -135,6 +172,7 @@ export function AdminSettingsForm() {
         </div>
       </div>
 
+      {/* Contact */}
       <div>
         <h3 className="mb-2 font-semibold text-brand-ink">Contact</h3>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

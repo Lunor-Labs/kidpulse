@@ -32,6 +32,24 @@ export interface AdminProductVariant {
   isActive: boolean;
 }
 
+export interface AdminVariantStageOption {
+  id: string;
+  label: string;
+  selectCount: number | null;
+  priceOverride: number | null;
+  stockQuantity: number;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface AdminVariantStage {
+  id: string;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: AdminVariantStageOption[];
+}
+
 export interface AdminProduct {
   id: string;
   name: string;
@@ -42,6 +60,7 @@ export interface AdminProduct {
   sku: string;
   stockQuantity: number;
   lowStockAlert: number;
+  shippingCost: number | null;
   tags: string[];
   ageRangeMin: number | null;
   ageRangeMax: number | null;
@@ -55,6 +74,8 @@ export interface AdminProduct {
   variants: AdminProductVariant[];
   avgRating: number;
   reviewCount: number;
+  hasMultiStageVariants: boolean;
+  variantStages: AdminVariantStage[];
   createdAt: string;
   updatedAt: string;
 }
@@ -78,6 +99,24 @@ export interface CategoryFormValues {
   metaDescription: string | null;
 }
 
+export interface ProductVariantStageOptionFormValue {
+  id?: string | null;
+  label: string;
+  selectCount?: number | null;
+  priceOverride?: number | null;
+  stockQuantity: number;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface ProductVariantStageFormValue {
+  id?: string | null;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: ProductVariantStageOptionFormValue[];
+}
+
 export interface ProductFormValues {
   name: string;
   slug: string;
@@ -87,6 +126,7 @@ export interface ProductFormValues {
   sku: string;
   stockQuantity: number;
   lowStockAlert: number;
+  shippingCost: number | null;
   tags: string[];
   ageRangeMin: number | null;
   ageRangeMax: number | null;
@@ -108,6 +148,8 @@ export interface ProductFormValues {
     sortOrder: number;
     isActive: boolean;
   }>;
+  hasMultiStageVariants: boolean;
+  variantStages: ProductVariantStageFormValue[];
 }
 
 export interface ImageUploadResult {
@@ -178,6 +220,8 @@ export interface AdminSettings {
   whatsappNumber: string | null;
   bankTransferDeadlineDays: number;
   supportEmail: string | null;
+  defaultShippingCost: number;
+  freeShippingThreshold: number;
   updatedAt: string;
 }
 
@@ -579,4 +623,6 @@ export interface AdminSettingsFormValues {
   whatsappNumber: string | null;
   bankTransferDeadlineDays: number;
   supportEmail: string | null;
+  defaultShippingCost: number;
+  freeShippingThreshold: number;
 }

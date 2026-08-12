@@ -20,15 +20,16 @@ export function PrimaryNav() {
   if (!hydrated) return <nav className="max-[980px]:hidden" aria-hidden />;
 
   const links = isAdminRole(user?.role)
-    ? ADMIN_NAV_LINKS.filter((l) => !l.superAdminOnly || user?.role === 'super_admin').map(
-        (l) => ({ href: l.href, label: l.label })
-      )
+    ? ADMIN_NAV_LINKS.filter((l) =>
+        !l.dropdownOnly &&
+        (!l.superAdminOnly || user?.role === 'super_admin')
+      ).map((l) => ({ href: l.href, label: l.label }))
     : NAV_LINKS.map((l) => ({ href: l.href, label: l.label }));
 
   return (
     <nav
       aria-label="Primary"
-      className="max-[980px]:hidden flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="max-[980px]:hidden flex min-w-0 shrink items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {links.map((link) => {
         const active = isActive(link.href, pathname);

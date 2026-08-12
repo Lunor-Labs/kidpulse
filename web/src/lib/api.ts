@@ -8,7 +8,8 @@ import type {
   ReviewList,
 } from '@/types/catalog';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:4000';
+console.log('api.ts API_URL:', API_URL);
 
 export class ApiUnavailableError extends Error {}
 
@@ -90,4 +91,73 @@ export function getProductBanner(productId: string): Promise<ProductBanner | nul
     `/api/v1/product-banners?productId=${encodeURIComponent(productId)}`,
     120
   );
+}
+
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+
+async function authRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (typeof body?.error === 'string' ? body.error : body?.error?.message)
+      ?? body?.message
+      ?? `Request failed (${res.status})`
+    );
+  }
+
+  const body = (await res.json()) as { data: T };
+  return body.data;
+}
+
+export interface LoginResult {
+  token: string;
+  role: string;
+}
+
+export interface RegisterResult {
+  token: string;
+}
+
+export function apiLogin(email: string, password: string) {
+  return authRequest<LoginResult>('/api/v1/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function apiRegister(email: string, password: string, fullName: string) {
+  return authRequest<RegisterResult>('/api/v1/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, fullName }),
+  });
+}
+
+export function apiForgotPassword(email: string) {
+  return authRequest<{ message: string }>('/api/v1/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function apiResetPassword(token: string, password: string) {
+  return authRequest<{ message: string }>('/api/v1/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
+}
+
+export function apiChangePassword(currentPassword: string, newPassword: string, token: string) {
+  return authRequest<{ message: string }>('/api/v1/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { apiForgotPassword } from '@/lib/api';
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -14,11 +14,7 @@ export function ForgotPasswordForm() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (err) throw err;
+      await apiForgotPassword(email.trim());
       setSent(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to send reset link');

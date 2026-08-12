@@ -9,6 +9,8 @@ export interface AdminSettingsDto {
   whatsappNumber: string | null;
   bankTransferDeadlineDays: number;
   supportEmail: string | null;
+  defaultShippingCost: number;
+  freeShippingThreshold: number;
   updatedAt: string;
 }
 
@@ -33,6 +35,8 @@ export class AdminSettingsService {
         whatsappNumber: input.whatsappNumber ?? null,
         bankTransferDeadlineDays: input.bankTransferDeadlineDays ?? 1,
         supportEmail: input.supportEmail ?? null,
+        defaultShippingCost: input.defaultShippingCost ?? 350,
+        freeShippingThreshold: input.freeShippingThreshold ?? 5000,
       },
       create: {
         id: 'singleton',
@@ -43,6 +47,8 @@ export class AdminSettingsService {
         whatsappNumber: input.whatsappNumber ?? null,
         bankTransferDeadlineDays: input.bankTransferDeadlineDays ?? 1,
         supportEmail: input.supportEmail ?? null,
+        defaultShippingCost: input.defaultShippingCost ?? 350,
+        freeShippingThreshold: input.freeShippingThreshold ?? 5000,
       },
     });
     return this.toDto(row);
@@ -56,6 +62,8 @@ export class AdminSettingsService {
     whatsappNumber: string | null;
     bankTransferDeadlineDays: number;
     supportEmail: string | null;
+    defaultShippingCost: unknown;
+    freeShippingThreshold: unknown;
     updatedAt: Date;
   }): AdminSettingsDto {
     return {
@@ -66,6 +74,8 @@ export class AdminSettingsService {
       whatsappNumber: row.whatsappNumber,
       bankTransferDeadlineDays: row.bankTransferDeadlineDays,
       supportEmail: row.supportEmail,
+      defaultShippingCost: Number(row.defaultShippingCost ?? 350),
+      freeShippingThreshold: Number(row.freeShippingThreshold ?? 5000),
       updatedAt: row.updatedAt.toISOString(),
     };
   }

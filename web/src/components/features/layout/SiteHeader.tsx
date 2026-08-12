@@ -8,7 +8,7 @@ import { WishlistLink } from './WishlistLink';
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 flex flex-wrap items-center gap-5 bg-brand-indigo px-8 py-3.5 shadow-[0_2px_16px] shadow-brand-indigo/18 max-[980px]:gap-3 max-[980px]:px-4 relative">
+    <header className="sticky top-0 z-40 flex flex-wrap items-center gap-3 bg-brand-indigo px-8 py-3.5 shadow-[0_2px_16px] shadow-brand-indigo/18 max-[980px]:gap-3 max-[980px]:px-4 relative">
       <Link href="/" aria-label="KidPulse home" className="flex shrink-0 items-center gap-2.5 whitespace-nowrap">
         <Image
           src="/images/logo.png"
@@ -24,7 +24,7 @@ export function SiteHeader() {
 
       <SearchBar />
 
-      <div className="ml-auto flex items-center gap-5 text-[0.9rem] font-semibold text-white max-[980px]:gap-3">
+      <div className="flex shrink-0 items-center gap-5 text-[0.9rem] font-semibold text-white max-[980px]:gap-3">
         <WishlistLink />
         <CartButton />
         <HeaderAccountMenu />

@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { ProductListQuery, ProductSearchQuery } from '../types/productQuery';
+import type { VariantStageInput } from '../types/adminSchemas';
 
 const productInclude = {
   category: { select: { id: true, name: true, slug: true } },
@@ -8,6 +9,15 @@ const productInclude = {
   variants: {
     where: { deletedAt: null },
     orderBy: { sortOrder: 'asc' as const },
+  },
+  variantStages: {
+    orderBy: { stageOrder: 'asc' as const },
+    include: {
+      options: {
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' as const },
+      },
+    },
   },
 } satisfies Prisma.ProductInclude;
 
@@ -81,9 +91,10 @@ export class ProductRepository {
       const ageMaxClause: Prisma.ProductWhereInput = {
         OR: [{ ageRangeMin: { lte: query.maxAge } }, { ageRangeMin: null }],
       };
-      where.AND = where.AND ? [...(Array.isArray(where.AND) ? where.AND : [where.AND]), ageMaxClause] : [ageMaxClause];
+      where.AND = where.AND
+        ? [...(Array.isArray(where.AND) ? where.AND : [where.AND]), ageMaxClause]
+        : [ageMaxClause];
     }
-
     return prisma.product.findMany({
       where,
       take: query.limit,
@@ -197,7 +208,6 @@ export class ProductRepository {
           })),
         });
       }
-
       const existing = await tx.productVariant.findMany({
         where: { productId: id, deletedAt: null },
         select: { id: true },
@@ -230,6 +240,68 @@ export class ProductRepository {
         }
       }
       await syncProductStockFromVariants(tx, id);
+    });
+  }
+
+  async updateVariantStages(productId: string, stages: VariantStageInput[]): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+      const existingStages = await tx.variantStage.findMany({
+        where: { productId },
+        select: { id: true },
+      });
+      const incomingStageIds = new Set(
+        stages.map((s) => s.id).filter((id): id is string => Boolean(id))
+      );
+      const toDeleteStages = existingStages.filter((s) => !incomingStageIds.has(s.id));
+      if (toDeleteStages.length > 0) {
+        await tx.variantStage.deleteMany({
+          where: { id: { in: toDeleteStages.map((s) => s.id) } },
+        });
+      }
+      for (const stage of stages) {
+        let stageId: string;
+        if (stage.id) {
+          await tx.variantStage.update({
+            where: { id: stage.id },
+            data: { label: stage.label, stageOrder: stage.stageOrder, maxSelect: stage.maxSelect },
+          });
+          stageId = stage.id;
+        } else {
+          const created = await tx.variantStage.create({
+            data: { productId, label: stage.label, stageOrder: stage.stageOrder, maxSelect: stage.maxSelect },
+          });
+          stageId = created.id;
+        }
+        const existingOptions = await tx.variantStageOption.findMany({
+          where: { stageId },
+          select: { id: true },
+        });
+        const incomingOptionIds = new Set(
+          stage.options.map((o) => o.id).filter((id): id is string => Boolean(id))
+        );
+        const toDeleteOptions = existingOptions.filter((o) => !incomingOptionIds.has(o.id));
+        if (toDeleteOptions.length > 0) {
+          await tx.variantStageOption.deleteMany({
+            where: { id: { in: toDeleteOptions.map((o) => o.id) } },
+          });
+        }
+        for (let i = 0; i < stage.options.length; i++) {
+          const opt = stage.options[i];
+          const payload = {
+            label: opt.label,
+            selectCount: opt.selectCount ?? null,
+            priceOverride: opt.priceOverride ?? null,
+            stockQuantity: opt.stockQuantity ?? 0,
+            sortOrder: opt.sortOrder ?? i,
+            isActive: opt.isActive ?? true,
+          };
+          if (opt.id) {
+            await tx.variantStageOption.update({ where: { id: opt.id }, data: payload });
+          } else {
+            await tx.variantStageOption.create({ data: { stageId, ...payload } });
+          }
+        }
+      }
     });
   }
 

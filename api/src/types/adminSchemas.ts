@@ -37,6 +37,26 @@ const variantInputSchema = z.object({
 });
 export type VariantInput = z.infer<typeof variantInputSchema>;
 
+export const stageOptionInputSchema = z.object({
+  id: z.string().trim().min(1).nullable().optional(),
+  label: z.string().trim().min(1).max(120),
+  selectCount: z.number().int().min(1).max(20).nullable().optional(),
+  priceOverride: z.number().nonnegative().max(10_000_000).nullable().optional(),
+  stockQuantity: z.number().int().min(0).max(1_000_000).default(0),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+  isActive: z.boolean().optional(),
+});
+export type StageOptionInput = z.infer<typeof stageOptionInputSchema>;
+
+export const variantStageInputSchema = z.object({
+  id: z.string().trim().min(1).nullable().optional(),
+  stageOrder: z.number().int().min(0).max(1),
+  label: z.string().trim().min(1).max(80),
+  maxSelect: z.number().int().min(1).max(20).default(1),
+  options: z.array(stageOptionInputSchema).min(1).max(50),
+});
+export type VariantStageInput = z.infer<typeof variantStageInputSchema>;
+
 export const productUpsertSchema = z.object({
   name: z.string().trim().min(1).max(200),
   slug: slugRule,
@@ -46,6 +66,7 @@ export const productUpsertSchema = z.object({
   sku: z.string().trim().min(1).max(80),
   stockQuantity: z.number().int().min(0).max(1_000_000),
   lowStockAlert: z.number().int().min(0).max(1_000_000).optional(),
+  shippingCost: z.number().nonnegative().max(10_000_000).nullable().optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   ageRangeMin: z.number().int().min(0).max(18).nullable().optional(),
   ageRangeMax: z.number().int().min(0).max(18).nullable().optional(),
@@ -57,6 +78,8 @@ export const productUpsertSchema = z.object({
   categoryId: z.string().trim().min(1),
   images: z.array(imageInputSchema).max(12).default([]),
   variants: z.array(variantInputSchema).max(30).default([]),
+  hasMultiStageVariants: z.boolean().optional(),
+  variantStages: z.array(variantStageInputSchema).max(2).default([]),
 });
 
 export const bannerUpsertSchema = z.object({
@@ -69,7 +92,6 @@ export const bannerUpsertSchema = z.object({
   sortOrder: z.number().int().min(0).max(9999).optional(),
   isActive: z.boolean().optional(),
 });
-
 export type BannerUpsertInput = z.infer<typeof bannerUpsertSchema>;
 
 export const productBannerUpsertSchema = z.object({
@@ -84,7 +106,6 @@ export const productBannerUpsertSchema = z.object({
   sortOrder: z.number().int().min(0).max(9999).optional(),
   isActive: z.boolean().optional(),
 });
-
 export type ProductBannerUpsertInput = z.infer<typeof productBannerUpsertSchema>;
 
 export const couponUpsertSchema = z.object({
@@ -98,7 +119,6 @@ export const couponUpsertSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
   isActive: z.boolean().optional(),
 });
-
 export type CouponUpsertInput = z.infer<typeof couponUpsertSchema>;
 
 export const autoDiscountUpsertSchema = z.object({
@@ -139,8 +159,9 @@ export const adminSettingsSchema = z.object({
   whatsappNumber: z.string().trim().max(32).nullable().optional(),
   bankTransferDeadlineDays: z.number().int().min(1).max(30).optional(),
   supportEmail: z.string().trim().email().nullable().optional(),
+  defaultShippingCost: z.number().nonnegative().max(10_000_000).optional(),
+  freeShippingThreshold: z.number().nonnegative().max(10_000_000).optional(),
 });
-
 export type AdminSettingsInput = z.infer<typeof adminSettingsSchema>;
 
 export const orderStatusUpdateSchema = z.object({

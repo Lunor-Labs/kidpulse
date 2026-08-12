@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { apiRegister } from '@/lib/api';
 import { PasswordField } from '@/components/features/auth/PasswordField';
-import { GoogleButton } from '@/components/features/auth/GoogleButton';
+import { useAuthStore } from '@/stores/authStore';
 
 export function RegisterForm() {
   const router = useRouter();
@@ -23,23 +23,22 @@ export function RegisterForm() {
     setError(null);
     setNotice(null);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error: err } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: { full_name: fullName.trim() },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      const result = await apiRegister(email.trim(), password, fullName.trim());
+      document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
+      const payload = JSON.parse(atob(result.token.split('.')[1]));
+      useAuthStore.getState().setSession(
+        {
+          id: payload.sub,
+          email: payload.email,
+          fullName: fullName.trim(),
+          role: 'customer',
         },
-      });
-      if (err) throw err;
-      if (data.session) {
-        router.push(next);
-        router.refresh();
-        return;
-      }
-      setNotice('Check your inbox to confirm your email.');
-      setLoading(false);
+        result.token
+      );
+
+      router.push(next);
+      setTimeout(() => router.refresh(), 100);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-up failed');
       setLoading(false);
@@ -48,12 +47,6 @@ export function RegisterForm() {
 
   return (
     <>
-      <GoogleButton next={next} label="Sign up with Google" />
-      <div className="my-5 flex items-center gap-3 text-[0.75rem] uppercase tracking-widest text-brand-ink-soft">
-        <span className="flex-1 border-t border-brand-line" />
-        or
-        <span className="flex-1 border-t border-brand-line" />
-      </div>
       <form onSubmit={handle} className="space-y-4">
         <div>
           <label htmlFor="fullName" className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">

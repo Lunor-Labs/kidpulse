@@ -37,6 +37,7 @@ model Product {
   sku             String          @unique
   stockQuantity   Int             @default(0)
   lowStockAlert   Int             @default(5)
+  shippingCost      Decimal?        @db.Decimal(10, 2)
   tags            String[]        @default([])
   ageRangeMin     Int?
   ageRangeMax     Int?
@@ -57,6 +58,8 @@ model Product {
   quantityDiscounts QuantityDiscount[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  hasMultiStageVariants Boolean        @default(false)
+  variantStages         VariantStage[]
 
   @@index([categoryId])
   @@index([deletedAt])
@@ -119,6 +122,7 @@ model UserProfile {
   id          String    @id
   email       String    @unique
   fullName    String?
+  passwordHash String?
   phone       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -285,6 +289,8 @@ model AdminSettings {
   bankTransferDeadlineDays Int      @default(1)
   supportEmail             String?
   updatedAt                DateTime @updatedAt
+  defaultShippingCost Decimal       @default(350) @db.Decimal(10, 2)
+  freeShippingThreshold Decimal     @default(5000) @db.Decimal(10, 2)
 
   @@map("admin_settings")
 }
@@ -406,4 +412,63 @@ model AdminActionLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("admin_action_log")
+}
+
+model StaffUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String?
+  role         String    @default("staff")
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("staff_users")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  email     String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+model VariantStage {
+  id           String               @id @default(cuid())
+  productId    String
+  product      Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stageOrder   Int
+  label        String
+  maxSelect    Int                  @default(1)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  options      VariantStageOption[]
+
+  @@unique([productId, stageOrder])
+  @@index([productId])
+  @@map("variant_stages")
+}
+
+model VariantStageOption {
+  id            String       @id @default(cuid())
+  stageId       String
+  stage         VariantStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  label         String
+  selectCount   Int?
+  priceOverride Decimal?     @db.Decimal(10, 2)
+  stockQuantity Int          @default(0)
+  sortOrder     Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([stageId, isActive])
+  @@map("variant_stage_options")
 }

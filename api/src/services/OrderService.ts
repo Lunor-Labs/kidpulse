@@ -1,18 +1,14 @@
+import { randomUUID } from 'node:crypto';
 import { env } from '../config/env';
 import { AppError } from '../lib/AppError';
 import { logger } from '../lib/logger';
 import { prisma } from '../lib/prisma';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AuthUser } from '../types/express';
 import type { CheckoutInput, CheckoutShippingInput } from '../types/accountSchemas';
 import type { CheckoutResultDto, OrderDto } from '../types/dto';
 import { PromotionsService } from './PromotionsService';
 import { EmailService } from './EmailService';
 import { ProfileService } from './ProfileService';
-
-const SHIPPING_FLAT_LKR = 350;
-const FREE_SHIPPING_THRESHOLD_LKR = 5000;
 
 type FullOrderRow = NonNullable<Awaited<ReturnType<OrderService['findOrderWithItems']>>>;
 
@@ -30,12 +26,15 @@ export class OrderService {
     const shipping = await this.resolveShipping(user, input);
     const priced = await this.priceItems(input.items);
 
-    // Group variant lines by product so per-product quantity discounts pool
-    // quantities across variants of the same product.
-    const groupedForPromotions = new Map<
-      string,
-      { productId: string; categoryId: string; price: number; quantity: number; lineTotal: number }
-    >();
+    // Load global shipping settings
+    const adminSettings = await prisma.adminSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { defaultShippingCost: true, freeShippingThreshold: true },
+    });
+    const DEFAULT_SHIPPING = Number(adminSettings?.defaultShippingCost ?? 350);
+    const FREE_THRESHOLD = Number(adminSettings?.freeShippingThreshold ?? 5000);
+
+    const groupedForPromotions = new Map<string, { productId: string; categoryId: string; price: number; quantity: number; lineTotal: number }>();
     for (const item of priced.items) {
       const existing = groupedForPromotions.get(item.productId);
       if (existing) {
@@ -51,17 +50,30 @@ export class OrderService {
         });
       }
     }
+
     const pricing = await this.promotions.applyToCart(
       user?.id ?? null,
       [...groupedForPromotions.values()],
       input.couponCode ?? null
     );
-    const itemDiscountAmount =
-      pricing.autoDiscountAmount + pricing.quantityDiscountAmount;
+    const itemDiscountAmount = pricing.autoDiscountAmount + pricing.quantityDiscountAmount;
     const discountAmount = pricing.totalDiscount;
     const subtotalAfterDiscount = Math.max(0, priced.subtotal - discountAmount);
-    const shippingAmount =
-      subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD_LKR ? 0 : SHIPPING_FLAT_LKR;
+
+    // Shipping: free if subtotal meets threshold, otherwise use highest product-level
+    // shipping cost among cart items, falling back to global default
+    let shippingAmount: number;
+    if (subtotalAfterDiscount >= FREE_THRESHOLD) {
+      shippingAmount = 0;
+    } else {
+      const productShippingCosts = priced.items
+        .map((i) => i.shippingCost)
+        .filter((c): c is number => c !== null && c !== undefined);
+      shippingAmount = productShippingCosts.length > 0
+        ? Math.max(...productShippingCosts)
+        : DEFAULT_SHIPPING;
+    }
+
     const total = subtotalAfterDiscount + shippingAmount;
 
     let effectiveUser = user;
@@ -123,6 +135,8 @@ export class OrderService {
           },
           include: { items: { include: { product: { select: { slug: true } } } } },
         });
+
+        // Standard variant / product stock decrement
         const productsWithVariantLines = new Set<string>();
         for (const item of priced.items) {
           if (item.variantId) {
@@ -131,13 +145,15 @@ export class OrderService {
               data: { stockQuantity: { decrement: item.quantity } },
             });
             productsWithVariantLines.add(item.productId);
-          } else {
+          } else if (!item.stageOptionIds?.length) {
             await tx.product.update({
               where: { id: item.productId },
               data: { stockQuantity: { decrement: item.quantity } },
             });
           }
         }
+
+        // Sync product-level stock for variant-based items
         for (const productId of productsWithVariantLines) {
           const agg = await tx.productVariant.aggregate({
             where: { productId, deletedAt: null, isActive: true },
@@ -148,13 +164,28 @@ export class OrderService {
             data: { stockQuantity: agg._sum.stockQuantity ?? 0 },
           });
         }
+
+        // Multi-stage option stock decrement
+        for (const item of priced.items) {
+          if (item.stageOptionIds && item.stageOptionIds.length > 0) {
+            for (const optionId of item.stageOptionIds) {
+              await tx.variantStageOption.update({
+                where: { id: optionId },
+                data: { stockQuantity: { decrement: item.quantity } },
+              });
+            }
+          }
+        }
+
         return order;
       });
+
       if (pricing.coupon) {
         await this.promotions
           .recordRedemption(pricing.coupon.id, effectiveUser!.id, created.id)
           .catch(() => undefined);
       }
+
       const dto = this.toDto(created as FullOrderRow);
       await this.sendPostCheckoutEmails(dto, createdAccount).catch((err) => {
         logger.warn({ err }, 'Post-checkout email failed');
@@ -162,11 +193,8 @@ export class OrderService {
       await this.sendLowStockAlerts(priced.items).catch((err) => {
         logger.warn({ err }, 'Low-stock alert email failed');
       });
-      return {
-        order: dto,
-        createdAccount,
-        emailVerificationSent,
-      };
+
+      return { order: dto, createdAccount, emailVerificationSent };
     } catch (error) {
       logger.error({ error, userId: effectiveUser?.id }, 'Order creation failed');
       throw new AppError('Unable to place order', 500);
@@ -206,10 +234,25 @@ export class OrderService {
       },
     });
     const byId = new Map(products.map((p) => [p.id, p]));
+
+    const allStageOptionIds = items
+      .flatMap((i) => i.stageOptionIds ?? [])
+      .filter(Boolean);
+    const stageOptionsMap = new Map<string, { id: string; stockQuantity: number; label: string }>();
+    if (allStageOptionIds.length > 0) {
+      const stageOptions = await prisma.variantStageOption.findMany({
+        where: { id: { in: allStageOptionIds }, isActive: true },
+        select: { id: true, stockQuantity: true, label: true },
+      });
+      for (const opt of stageOptions) {
+        stageOptionsMap.set(opt.id, opt);
+      }
+    }
+
     let subtotal = 0;
     const priced = items.map((input) => {
       const product = byId.get(input.productId);
-      if (!product) throw new AppError(`Product no longer available`, 400);
+      if (!product) throw new AppError('Product no longer available', 400);
 
       const variant = input.variantId
         ? product.variants.find((v) => v.id === input.variantId)
@@ -218,17 +261,36 @@ export class OrderService {
         throw new AppError(`Selected option of "${product.name}" is no longer available`, 400);
       }
 
+      const stageOptionIds = input.stageOptionIds ?? null;
+      if (stageOptionIds && stageOptionIds.length > 0) {
+        for (const optionId of stageOptionIds) {
+          const opt = stageOptionsMap.get(optionId);
+          if (!opt) {
+            throw new AppError(`A selected character for "${product.name}" is no longer available`, 400);
+          }
+          if (opt.stockQuantity < input.quantity) {
+            throw new AppError(
+              `Only ${opt.stockQuantity} left of "${opt.label}" for "${product.name}"`,
+              400
+            );
+          }
+        }
+      }
+
       const availableStock = variant ? variant.stockQuantity : product.stockQuantity;
       const displayName = variant ? `${product.name} (${variant.label})` : product.name;
-      if (availableStock < input.quantity) {
+      if (!stageOptionIds?.length && availableStock < input.quantity) {
         throw new AppError(`Only ${availableStock} left of "${displayName}"`, 400);
       }
+
       const price = Number(variant ? variant.price : product.price);
       const lineTotal = Math.round(price * input.quantity * 100) / 100;
       subtotal = Math.round((subtotal + lineTotal) * 100) / 100;
+
       return {
         productId: product.id,
         variantId: variant?.id ?? null,
+        stageOptionIds,
         categoryId: product.categoryId,
         name: displayName,
         sku: variant?.sku ?? product.sku,
@@ -238,6 +300,9 @@ export class OrderService {
         lineTotal,
         stockBefore: availableStock,
         lowStockAlert: product.lowStockAlert,
+        shippingCost: (product as any).shippingCost === null || (product as any).shippingCost === undefined
+          ? null
+          : Number((product as any).shippingCost),
       };
     });
     return { subtotal, items: priced };
@@ -285,43 +350,20 @@ export class OrderService {
     email: string,
     fullName: string
   ): Promise<{ userId: string; created: boolean; emailSent: boolean }> {
-    const supa = getSupabaseAdmin();
-    let userId: string | null = null;
-    let created = false;
-    for (let page = 1; page <= 20; page += 1) {
-      const { data, error } = await supa.auth.admin.listUsers({ page, perPage: 200 });
-      if (error) throw new AppError('Auth lookup failed', 500);
-      const match = data.users.find(
-        (u: SupabaseUser) => u.email?.toLowerCase() === email.toLowerCase()
-      );
-      if (match) {
-        userId = match.id;
-        break;
-      }
-      if (data.users.length < 200) break;
+    const existing = await prisma.userProfile.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (existing) {
+      return { userId: existing.id, created: false, emailSent: false };
     }
-    if (!userId) {
-      const { data, error } = await supa.auth.admin.createUser({
-        email,
-        email_confirm: false,
-        user_metadata: { fullName },
-        app_metadata: { role: 'customer' },
-      });
-      if (error || !data.user) throw new AppError('Unable to create guest account', 500);
-      userId = data.user.id;
-      created = true;
-    }
-    let emailSent = false;
-    if (created) {
-      try {
-        await supa.auth.admin.generateLink({ type: 'magiclink', email });
-        emailSent = true;
-      } catch (err) {
-        logger.warn({ err }, 'Guest magic link generation failed');
-      }
-    }
-    if (!userId) throw new AppError('Unable to resolve guest account', 500);
-    return { userId, created, emailSent };
+    const newProfile = await prisma.userProfile.create({
+      data: {
+        id: randomUUID(),
+        email: email.toLowerCase(),
+        fullName,
+      },
+    });
+    return { userId: newProfile.id, created: true, emailSent: false };
   }
 
   private async sendLowStockAlerts(
@@ -349,10 +391,7 @@ export class OrderService {
     const settings = await prisma.adminSettings.findUnique({ where: { id: 'singleton' } });
     const to = settings?.supportEmail;
     if (!to) {
-      logger.info(
-        { items: newlyCrossed },
-        'Low stock detected but no supportEmail configured — alert skipped'
-      );
+      logger.info({ items: newlyCrossed }, 'Low stock detected but no supportEmail configured — alert skipped');
       return;
     }
     await this.emailService.sendLowStockAlert(to, newlyCrossed);
@@ -391,9 +430,19 @@ export class OrderService {
     }
 
     if (createdAccount) {
+      const token = randomUUID();
+      const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+      await prisma.passwordResetToken.create({
+        data: {
+          email: order.ship.email.toLowerCase(),
+          token,
+          expiresAt,
+        },
+      });
+      const resetUrl = `${env.WEB_BASE_URL}/reset-password?token=${token}`;
       await this.emailService.sendWelcomeGuest(order.ship.email, {
         fullName: order.ship.fullName,
-        loginUrl: `${env.WEB_BASE_URL}/login`,
+        loginUrl: resetUrl,
       });
     }
   }
@@ -446,4 +495,3 @@ function generateOrderNumber(): string {
   const ts = Date.now().toString(36).slice(-4).toUpperCase();
   return `KP-${ts}${rand}`;
 }
-
