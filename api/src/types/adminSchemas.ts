@@ -60,7 +60,7 @@ export type VariantStageInput = z.infer<typeof variantStageInputSchema>;
 export const productUpsertSchema = z.object({
   name: z.string().trim().min(1).max(200),
   slug: slugRule,
-  description: z.string().trim().min(1).max(5000),
+  description: z.string().trim().min(1).max(50000),
   price: z.number().nonnegative().max(10_000_000),
   compareAtPrice: z.number().nonnegative().max(10_000_000).nullable().optional(),
   sku: z.string().trim().min(1).max(80),
@@ -76,6 +76,7 @@ export const productUpsertSchema = z.object({
   metaTitle: z.string().trim().max(160).nullable().optional(),
   metaDescription: z.string().trim().max(320).nullable().optional(),
   categoryId: z.string().trim().min(1),
+  additionalCategoryIds: z.array(z.string().trim().min(1)).default([]),
   images: z.array(imageInputSchema).max(12).default([]),
   variants: z.array(variantInputSchema).max(30).default([]),
   hasMultiStageVariants: z.boolean().optional(),

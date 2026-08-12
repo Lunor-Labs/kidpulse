@@ -61,6 +61,7 @@ function toDto(
   ratings: Map<string, { avg: number; count: number }>
 ): ProductDto {
   const rating = ratings.get(p.id) ?? { avg: 0, count: 0 };
+  const productCategories = (p as any).productCategories ?? [];
   return {
     id: p.id,
     name: p.name,
@@ -79,6 +80,7 @@ function toDto(
     metaTitle: p.metaTitle,
     metaDescription: p.metaDescription,
     category: p.category,
+    additionalCategories: productCategories.map((pc: any) => pc.category),
     images: p.images.map((i) => ({
       id: i.id,
       url: i.url,
@@ -99,9 +101,10 @@ function toDto(
       })),
     avgRating: Math.round(rating.avg * 10) / 10,
     reviewCount: rating.count,
-    shippingCost: (p as any).shippingCost === null || (p as any).shippingCost === undefined
-      ? null
-      : Number((p as any).shippingCost),
+    shippingCost:
+      (p as any).shippingCost === null || (p as any).shippingCost === undefined
+        ? null
+        : Number((p as any).shippingCost),
     hasMultiStageVariants: (p as any).hasMultiStageVariants ?? false,
     variantStages: ((p as any).variantStages ?? []).map(mapStage),
   };
@@ -169,9 +172,7 @@ export class ProductService {
   async create(input: ProductUpsertInput): Promise<AdminProductDto> {
     this.assertAgeRange(input);
     const dupe = await this.productRepo.findBySkuOrSlug(input.sku, input.slug);
-    if (dupe) {
-      throw new AppError('A product with this SKU or slug already exists', 409);
-    }
+    if (dupe) throw new AppError('A product with this SKU or slug already exists', 409);
     const created = await this.productRepo.createWithImages(
       {
         name: input.name,
@@ -199,7 +200,8 @@ export class ProductService {
         altText: img.altText ?? null,
         sortOrder: img.sortOrder ?? i,
       })),
-      input.variants.map((v, i) => this.toVariantWrite(v, i))
+      input.variants.map((v, i) => this.toVariantWrite(v, i)),
+      input.additionalCategoryIds ?? []
     );
     if (input.hasMultiStageVariants && input.variantStages?.length) {
       await this.productRepo.updateVariantStages(created.id, input.variantStages);
@@ -213,9 +215,7 @@ export class ProductService {
     if (!existing) throw new AppError('Product not found', 404);
     if (input.sku !== existing.sku || input.slug !== existing.slug) {
       const dupe = await this.productRepo.findBySkuOrSlug(input.sku, input.slug);
-      if (dupe && dupe.id !== id) {
-        throw new AppError('A product with this SKU or slug already exists', 409);
-      }
+      if (dupe && dupe.id !== id) throw new AppError('A product with this SKU or slug already exists', 409);
     }
     await this.productRepo.updateWithImages(
       id,
@@ -238,14 +238,15 @@ export class ProductService {
         metaDescription: input.metaDescription ?? null,
         categoryId: input.categoryId,
         hasMultiStageVariants: input.hasMultiStageVariants ?? false,
-        shippingCost: input.shippingCost ?? null,   
+        shippingCost: input.shippingCost ?? null,
       },
       input.images.map((img, i) => ({
         url: img.url,
         altText: img.altText ?? null,
         sortOrder: img.sortOrder ?? i,
       })),
-      input.variants.map((v, i) => this.toVariantWrite(v, i))
+      input.variants.map((v, i) => this.toVariantWrite(v, i)),
+      input.additionalCategoryIds ?? []
     );
     if (input.hasMultiStageVariants && input.variantStages?.length) {
       await this.productRepo.updateVariantStages(id, input.variantStages);

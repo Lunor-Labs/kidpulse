@@ -187,17 +187,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         {isOutOfStock
           ? '✕ Out of Stock'
           : hasMultiStage && !multiStageValue
-          ? 'Select your characters to continue'
-          : '🛒 Add to Cart'}
+            ? 'Select your characters to continue'
+            : '🛒 Add to Cart'}
       </button>
 
       <WishlistButton productId={product.id} variant="bar" />
 
       <div className="mt-6 border-t border-brand-line pt-5">
         <h2 className="mb-3 font-chewy text-[1.1rem] text-brand-indigo">About this kit</h2>
-        <p className="text-[0.92rem] leading-relaxed text-brand-ink-soft">
-          {product.description}
-        </p>
+        <div
+          className="prose prose-sm max-w-none text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-brand-indigo [&_h2]:font-chewy [&_h2]:text-brand-indigo [&_h3]:font-semibold [&_h3]:text-brand-ink [&_img]:rounded-[12px] [&_img]:my-3"
+          dangerouslySetInnerHTML={{ __html: product.description }}
+        />
       </div>
 
       {product.ageRangeMin && product.ageRangeMax && (
