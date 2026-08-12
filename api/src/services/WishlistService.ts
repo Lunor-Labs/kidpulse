@@ -24,6 +24,11 @@ export class WishlistService {
               category: { select: { id: true, name: true, slug: true } },
               images: { orderBy: { sortOrder: 'asc' } },
               variants: { where: { deletedAt: null, isActive: true } },
+              productCategories: {
+                include: {
+                  category: { select: { id: true, name: true, slug: true } },
+                },
+              },
             },
           },
         },
@@ -71,6 +76,9 @@ export class WishlistService {
             metaTitle: i.product.metaTitle,
             metaDescription: i.product.metaDescription,
             category: i.product.category,
+            additionalCategories: (i.product as any).productCategories?.map(
+              (pc: any) => pc.category
+            ) ?? [],
             images: i.product.images.map((img) => ({
               id: img.id,
               url: img.url,

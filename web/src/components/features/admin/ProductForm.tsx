@@ -8,6 +8,7 @@ import { FormField, inputClass } from './FormField';
 import { ProductImageManager } from './ProductImageManager';
 import { ProductVariantManager } from './ProductVariantManager';
 import { MultiStageVariantManager, type VariantStageFormValue } from './MultiStageVariantManager';
+import { RichTextEditor } from './RichTextEditor';
 import { adminApi } from '@/lib/adminApi';
 import { slugify } from '@/lib/slug';
 import { useAuthStore } from '@/stores/authStore';
@@ -37,6 +38,7 @@ function toValues(p?: AdminProduct): ProductFormValues {
     metaTitle: p?.metaTitle ?? '',
     metaDescription: p?.metaDescription ?? '',
     categoryId: p?.category.id ?? '',
+    additionalCategoryIds: p?.additionalCategories?.map((c) => c.id) ?? [],
     images:
       p?.images.map((img, i) => ({
         url: img.url,
@@ -104,6 +106,15 @@ export function ProductForm({ initial }: ProductFormProps) {
     setValues((prev) => ({ ...prev, [key]: val }));
   }
 
+  function toggleAdditionalCategory(categoryId: string, checked: boolean) {
+    const current = values.additionalCategoryIds;
+    if (checked) {
+      update('additionalCategoryIds', [...current, categoryId]);
+    } else {
+      update('additionalCategoryIds', current.filter((id) => id !== categoryId));
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -133,6 +144,9 @@ export function ProductForm({ initial }: ProductFormProps) {
         shippingCost: values.shippingCost,
         hasMultiStageVariants: values.hasMultiStageVariants,
         variantStages: values.hasMultiStageVariants ? values.variantStages : [],
+        additionalCategoryIds: values.additionalCategoryIds.filter(
+          (id) => id !== values.categoryId
+        ),
       };
       if (initial) {
         await adminApi.updateProduct(initial.id, payload, token);
@@ -186,16 +200,15 @@ export function ProductForm({ initial }: ProductFormProps) {
         </FormField>
       </div>
 
-      <FormField label="Description" htmlFor="p-desc" required>
-        <textarea
-          id="p-desc"
-          className={inputClass}
-          rows={5}
+      <div>
+        <div className="mb-1 text-[0.82rem] font-semibold text-brand-ink">
+          Description <span className="text-brand-berry">*</span>
+        </div>
+        <RichTextEditor
           value={values.description}
-          onChange={(e) => update('description', e.target.value)}
-          required
+          onChange={(html) => update('description', html)}
         />
-      </FormField>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <FormField label="Price (LKR)" htmlFor="p-price" required>
@@ -268,12 +281,20 @@ export function ProductForm({ initial }: ProductFormProps) {
             placeholder="Store default"
           />
         </FormField>
-        <FormField label="Category" htmlFor="p-cat" required>
+        <FormField label="Primary category" htmlFor="p-cat" required>
           <select
             id="p-cat"
             className={inputClass}
             value={values.categoryId}
-            onChange={(e) => update('categoryId', e.target.value)}
+            onChange={(e) => {
+              const newPrimary = e.target.value;
+              update('categoryId', newPrimary);
+              // Remove new primary from additional if it's there
+              update(
+                'additionalCategoryIds',
+                values.additionalCategoryIds.filter((id) => id !== newPrimary)
+              );
+            }}
             required
           >
             <option value="">— Select category —</option>
@@ -285,6 +306,33 @@ export function ProductForm({ initial }: ProductFormProps) {
           </select>
         </FormField>
       </div>
+
+      {/* Additional categories */}
+      {categories && categories.length > 1 && (
+        <div>
+          <div className="mb-1 text-[0.82rem] font-semibold text-brand-ink">
+            Additional categories
+          </div>
+          <p className="mb-2 text-[0.76rem] text-brand-ink-soft">
+            Product will appear when filtering by any selected category.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {categories
+              .filter((c) => c.id !== values.categoryId)
+              .map((c) => (
+                <label key={c.id} className="inline-flex items-center gap-2 text-[0.86rem] text-brand-ink cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={values.additionalCategoryIds.includes(c.id)}
+                    onChange={(e) => toggleAdditionalCategory(c.id, e.target.checked)}
+                    className="rounded"
+                  />
+                  {c.name}
+                </label>
+              ))}
+          </div>
+        </div>
+      )}
 
       <FormField
         label="Tags"
@@ -369,8 +417,7 @@ export function ProductForm({ initial }: ProductFormProps) {
             <div className="text-[0.86rem] font-semibold text-brand-ink">Variants &amp; Selections</div>
             <p className="mt-1 text-[0.76rem] text-brand-ink-soft">
               Use <strong>Multi-stage</strong> for products where customers first pick a pack size then
-              choose individual items (e.g. Character Packs, Theatre Shows). Use{' '}
-              <strong>Standard variants</strong> for simple size / colour options.
+              choose individual items. Use <strong>Standard variants</strong> for simple size / colour options.
             </p>
           </div>
           <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[0.82rem] font-semibold text-brand-ink">

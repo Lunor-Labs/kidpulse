@@ -19,6 +19,11 @@ const productInclude = {
       },
     },
   },
+  productCategories: {
+    include: {
+      category: { select: { id: true, name: true, slug: true } },
+    },
+  },
 } satisfies Prisma.ProductInclude;
 
 export interface VariantWriteInput {
@@ -51,15 +56,11 @@ async function syncProductStockFromVariants(
 
 function orderByFor(sort: ProductListQuery['sort']): Prisma.ProductOrderByWithRelationInput {
   switch (sort) {
-    case 'price-asc':
-      return { price: 'asc' };
-    case 'price-desc':
-      return { price: 'desc' };
-    case 'newest':
-      return { createdAt: 'desc' };
+    case 'price-asc': return { price: 'asc' };
+    case 'price-desc': return { price: 'desc' };
+    case 'newest': return { createdAt: 'desc' };
     case 'featured':
-    default:
-      return { isFeatured: 'desc' };
+    default: return { isFeatured: 'desc' };
   }
 }
 
@@ -70,7 +71,10 @@ export class ProductRepository {
     if (query.featured !== undefined) where.isFeatured = query.featured;
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.category && query.category.length > 0) {
-      where.category = { slug: { in: query.category } };
+      where.OR = [
+        { category: { slug: { in: query.category } } },
+        { productCategories: { some: { category: { slug: { in: query.category } } } } },
+      ];
     }
     if (query.exclude) {
       where.slug = { not: query.exclude };
@@ -145,17 +149,15 @@ export class ProductRepository {
 
   async findBySkuOrSlug(sku: string, slug: string) {
     return prisma.product.findFirst({
-      where: {
-        deletedAt: null,
-        OR: [{ sku }, { slug }],
-      },
+      where: { deletedAt: null, OR: [{ sku }, { slug }] },
     });
   }
 
   async createWithImages(
     data: Prisma.ProductUncheckedCreateInput,
     images: Array<{ url: string; altText: string | null; sortOrder: number }>,
-    variants: VariantWriteInput[] = []
+    variants: VariantWriteInput[] = [],
+    additionalCategoryIds: string[] = []
   ) {
     return prisma.$transaction(async (tx) => {
       const product = await tx.product.create({ data });
@@ -185,6 +187,17 @@ export class ProductRepository {
         });
         await syncProductStockFromVariants(tx, product.id);
       }
+      // Sync additional categories
+      const uniqueAdditional = additionalCategoryIds.filter((id) => id !== data.categoryId);
+      if (uniqueAdditional.length > 0) {
+        await tx.productCategory.createMany({
+          data: uniqueAdditional.map((categoryId) => ({
+            productId: product.id,
+            categoryId,
+          })),
+          skipDuplicates: true,
+        });
+      }
       return product;
     });
   }
@@ -193,7 +206,8 @@ export class ProductRepository {
     id: string,
     data: Prisma.ProductUncheckedUpdateInput,
     images: Array<{ url: string; altText: string | null; sortOrder: number }>,
-    variants: VariantWriteInput[] = []
+    variants: VariantWriteInput[] = [],
+    additionalCategoryIds: string[] = []
   ) {
     return prisma.$transaction(async (tx) => {
       await tx.product.update({ where: { id }, data });
@@ -240,6 +254,17 @@ export class ProductRepository {
         }
       }
       await syncProductStockFromVariants(tx, id);
+
+      // Sync additional categories
+      await tx.productCategory.deleteMany({ where: { productId: id } });
+      const primaryCategoryId = typeof data.categoryId === 'string' ? data.categoryId : undefined;
+      const uniqueAdditional = additionalCategoryIds.filter((cid) => cid !== primaryCategoryId);
+      if (uniqueAdditional.length > 0) {
+        await tx.productCategory.createMany({
+          data: uniqueAdditional.map((categoryId) => ({ productId: id, categoryId })),
+          skipDuplicates: true,
+        });
+      }
     });
   }
 
@@ -321,9 +346,7 @@ export class ProductRepository {
           where: { deletedAt: null, isActive: true, stockQuantity: { gt: 0 } },
           select: { stockQuantity: true, lowStockAlert: true },
         }),
-        prisma.product.count({
-          where: { deletedAt: null, isActive: true, stockQuantity: 0 },
-        }),
+        prisma.product.count({ where: { deletedAt: null, isActive: true, stockQuantity: 0 } }),
         prisma.review.count(),
       ]);
     const lowStock = stockRows.filter((p) => p.stockQuantity <= p.lowStockAlert).length;
@@ -340,10 +363,7 @@ export class ProductRepository {
     });
     const map = new Map<string, { avg: number; count: number }>();
     for (const r of rows) {
-      map.set(r.productId, {
-        avg: r._avg.rating ?? 0,
-        count: r._count._all,
-      });
+      map.set(r.productId, { avg: r._avg.rating ?? 0, count: r._count._all });
     }
     return map;
   }

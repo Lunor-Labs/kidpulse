@@ -70,6 +70,7 @@ export interface AdminProduct {
   metaTitle: string | null;
   metaDescription: string | null;
   category: { id: string; name: string; slug: string };
+  additionalCategories: { id: string; name: string; slug: string }[];
   images: AdminProductImage[];
   variants: AdminProductVariant[];
   avgRating: number;
@@ -136,6 +137,7 @@ export interface ProductFormValues {
   metaTitle: string | null;
   metaDescription: string | null;
   categoryId: string;
+  additionalCategoryIds: string[];
   images: Array<{ url: string; altText: string | null; sortOrder: number }>;
   variants: Array<{
     id: string | null;
