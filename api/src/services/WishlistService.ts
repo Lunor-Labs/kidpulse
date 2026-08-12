@@ -23,6 +23,7 @@ export class WishlistService {
             include: {
               category: { select: { id: true, name: true, slug: true } },
               images: { orderBy: { sortOrder: 'asc' } },
+              variants: { where: { deletedAt: null, isActive: true } },
             },
           },
         },
@@ -44,8 +45,25 @@ export class WishlistService {
             sku: i.product.sku,
             stockQuantity: i.product.stockQuantity,
             lowStockAlert: i.product.lowStockAlert,
+            shippingCost:
+              (i.product as any).shippingCost === null ||
+              (i.product as any).shippingCost === undefined
+                ? null
+                : Number((i.product as any).shippingCost),
             tags: i.product.tags,
-            variants: [],
+            variants: i.product.variants
+              .filter((v) => v.isActive)
+              .map((v) => ({
+                id: v.id,
+                label: v.label,
+                sku: v.sku,
+                price: Number(v.price),
+                compareAtPrice:
+                  v.compareAtPrice === null ? null : Number(v.compareAtPrice),
+                stockQuantity: v.stockQuantity,
+                imageUrl: v.imageUrl,
+                sortOrder: v.sortOrder,
+              })),
             ageRangeMin: i.product.ageRangeMin,
             ageRangeMax: i.product.ageRangeMax,
             isFeatured: i.product.isFeatured,
@@ -61,6 +79,8 @@ export class WishlistService {
             })),
             avgRating: Math.round(rating.avg * 10) / 10,
             reviewCount: rating.count,
+            hasMultiStageVariants: (i.product as any).hasMultiStageVariants ?? false,
+            variantStages: [],
           },
         };
       });
