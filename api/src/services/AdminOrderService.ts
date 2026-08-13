@@ -12,6 +12,7 @@ import type {
 import { EmailService } from './EmailService';
 
 export const ORDER_STATUSES = [
+  'PENDING',
   'PENDING_PAYMENT',
   'PROCESSING',
   'SHIPPED',
@@ -22,6 +23,7 @@ export const ORDER_STATUSES = [
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING: ['PROCESSING', 'CANCELLED'],
   PENDING_PAYMENT: ['PROCESSING', 'CANCELLED', 'FAILED'],
   PROCESSING: ['SHIPPED', 'CANCELLED'],
   SHIPPED: ['DELIVERED', 'CANCELLED'],
@@ -37,6 +39,7 @@ export function isValidTransition(from: string, to: string): boolean {
 }
 
 const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pending',
   PENDING_PAYMENT: 'Pending payment',
   PROCESSING: 'Processing',
   SHIPPED: 'Shipped',
