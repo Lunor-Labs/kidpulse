@@ -52,6 +52,11 @@ export const couponValidateSchema = z.object({
   subtotal: z.number().nonnegative().max(10_000_000),
 });
 
+export const cartPreviewSchema = z.object({
+  items: z.array(cartItemSchema).min(1).max(50),
+  couponCode: z.string().trim().max(40).nullable().optional(),
+});
+
 export const checkoutSchema = z.object({
   items: z.array(cartItemSchema).min(1).max(50),
   addressId: z.string().trim().min(1).nullable().optional(),
@@ -63,3 +68,4 @@ export const checkoutSchema = z.object({
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 export type CheckoutShippingInput = z.infer<typeof shippingAddressSchema>;
+export type CartPreviewInput = z.infer<typeof cartPreviewSchema>;

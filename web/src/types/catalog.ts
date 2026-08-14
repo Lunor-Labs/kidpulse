@@ -62,6 +62,7 @@ export interface Product {
   metaTitle?: string | null;
   metaDescription?: string | null;
   category: { id: string; name: string; slug: string };
+  additionalCategories?: { id: string; name: string; slug: string }[];
   images: ProductImage[];
   variants?: Variant[];
   avgRating?: number;

@@ -10,12 +10,27 @@ import type {
   PayHereStartFields,
 } from '@/types/catalog';
 
+export interface CartPreviewResult {
+  subtotal: number;
+  autoDiscountAmount: number;
+  quantityDiscountAmount: number;
+  spendThresholdDiscountAmount: number;
+  couponDiscountAmount: number;
+  totalDiscount: number;
+  coupon: CouponValidation | null;
+}
+
 export const storefrontApi = {
   placeOrder: (body: CheckoutInput, token: string | null) =>
     apiClient.post<CheckoutResult>('/api/v1/checkout', body, token),
 
   validateCoupon: (body: { code: string; subtotal: number }) =>
     apiClient.post<CouponValidation>('/api/v1/checkout/validate-coupon', body),
+
+  previewCart: (
+    body: { items: Array<{ productId: string; variantId?: string | null; quantity: number }>; couponCode?: string | null },
+    token: string | null
+  ) => apiClient.post<CartPreviewResult>('/api/v1/checkout/preview', body, token),
 
   listOrders: (token: string | null) =>
     apiClient.get<Order[]>('/api/v1/account/orders', token),

@@ -22,6 +22,7 @@ model Category {
   updatedAt       DateTime       @updatedAt
   products        Product[]
   autoDiscounts   AutoDiscount[]
+  productCategories     ProductCategory[]
 
   @@index([deletedAt])
   @@map("categories")
@@ -60,6 +61,7 @@ model Product {
   updatedAt       DateTime        @updatedAt
   hasMultiStageVariants Boolean        @default(false)
   variantStages         VariantStage[]
+  productCategories     ProductCategory[]
 
   @@index([categoryId])
   @@index([deletedAt])
@@ -471,4 +473,18 @@ model VariantStageOption {
 
   @@index([stageId, isActive])
   @@map("variant_stage_options")
+}
+
+model ProductCategory {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, categoryId])
+  @@index([productId])
+  @@index([categoryId])
+  @@map("product_categories")
 }

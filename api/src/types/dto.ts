@@ -16,41 +16,22 @@ export interface AdminCategoryDto extends CategoryDto {
   updatedAt: string;
 }
 
-export interface AdminProductDto extends Omit<ProductDto, 'variants'> {
-  isActive: boolean;
-  variants: AdminProductVariantDto[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AdminDashboardStats {
-  activeProducts: number;
-  activeCategories: number;
-  lowStock: number;
-  outOfStock: number;
-  totalReviews: number;
-}
-
-export interface ImageUploadResult {
-  url: string;
-  path: string;
-}
-
-export interface HomeBannerDto {
+export interface VariantStageOptionDto {
   id: string;
-  eyebrow: string | null;
-  headline: string;
-  subheadline: string | null;
-  imageUrl: string;
-  ctaLabel: string | null;
-  ctaHref: string | null;
+  label: string;
+  selectCount: number | null;
+  priceOverride: number | null;
+  stockQuantity: number;
   sortOrder: number;
+  isActive: boolean;
 }
 
-export interface AdminHomeBannerDto extends HomeBannerDto {
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+export interface VariantStageDto {
+  id: string;
+  stageOrder: number;
+  label: string;
+  maxSelect: number;
+  options: VariantStageOptionDto[];
 }
 
 export interface ProductImageDto {
@@ -93,6 +74,7 @@ export interface ProductDto {
   metaTitle: string | null;
   metaDescription: string | null;
   category: { id: string; name: string; slug: string };
+  additionalCategories: { id: string; name: string; slug: string }[];
   images: ProductImageDto[];
   variants: ProductVariantDto[];
   avgRating: number;
@@ -102,60 +84,41 @@ export interface ProductDto {
   variantStages: VariantStageDto[];
 }
 
-export interface ProductSuggestionDto {
-  id: string;
-  slug: string;
-  name: string;
-  price: number;
-  imageUrl: string | null;
-  categoryName: string;
-}
-
-export interface ReviewDto {
-  id: string;
-  rating: number;
-  title: string | null;
-  body: string;
-  authorName: string;
+export interface AdminProductDto extends Omit<ProductDto, 'variants'> {
+  isActive: boolean;
+  variants: AdminProductVariantDto[];
   createdAt: string;
+  updatedAt: string;
 }
 
-export interface ReviewListDto {
-  avgRating: number;
-  reviewCount: number;
-  reviews: ReviewDto[];
+export interface AdminDashboardStats {
+  activeProducts: number;
+  activeCategories: number;
+  lowStock: number;
+  outOfStock: number;
+  totalReviews: number;
 }
 
-export interface ProfileDto {
+export interface ImageUploadResult {
+  url: string;
+  path: string;
+}
+
+export interface HomeBannerDto {
   id: string;
-  email: string;
-  fullName: string | null;
-  phone: string | null;
+  eyebrow: string | null;
+  headline: string;
+  subheadline: string | null;
+  imageUrl: string;
+  ctaLabel: string | null;
+  ctaHref: string | null;
+  sortOrder: number;
 }
 
-export interface AddressDto {
-  id: string;
-  label: string | null;
-  fullName: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2: string | null;
-  city: string;
-  district: string;
-  postalCode: string | null;
-  country: string;
-  isDefault: boolean;
-}
-
-export interface WishlistItemDto {
-  id: string;
-  addedAt: string;
-  product: ProductDto;
-}
-
-export interface WishlistToggleResult {
-  productId: string;
-  inWishlist: boolean;
+export interface AdminHomeBannerDto extends HomeBannerDto {
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductBannerDto {
@@ -233,20 +196,58 @@ export interface CheckoutResultDto {
   emailVerificationSent: boolean;
 }
 
-export interface VariantStageOptionDto {
+export interface ProfileDto {
   id: string;
-  label: string;
-  selectCount: number | null;
-  priceOverride: number | null;
-  stockQuantity: number;
-  sortOrder: number;
-  isActive: boolean;
+  email: string;
+  fullName: string | null;
+  phone: string | null;
 }
 
-export interface VariantStageDto {
+export interface AddressDto {
   id: string;
-  stageOrder: number;
-  label: string;
-  maxSelect: number;
-  options: VariantStageOptionDto[];
+  label: string | null;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  district: string;
+  postalCode: string | null;
+  country: string;
+  isDefault: boolean;
+}
+
+export interface WishlistItemDto {
+  id: string;
+  addedAt: string;
+  product: ProductDto;
+}
+
+export interface WishlistToggleResult {
+  productId: string;
+  inWishlist: boolean;
+}
+
+export interface ProductSuggestionDto {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  imageUrl: string | null;
+  categoryName: string;
+}
+
+export interface ReviewDto {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface ReviewListDto {
+  avgRating: number;
+  reviewCount: number;
+  reviews: ReviewDto[];
 }
