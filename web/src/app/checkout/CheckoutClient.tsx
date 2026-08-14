@@ -74,7 +74,13 @@ function formatLKR(v: number): string {
 const inputClass =
   'w-full rounded-[10px] border border-brand-line bg-white px-3 py-2 text-[0.9rem] text-brand-ink focus:border-brand-indigo focus:outline-none';
 
+const inputErrorClass =
+  'w-full rounded-[10px] border border-brand-berry bg-white px-3 py-2 text-[0.9rem] text-brand-ink focus:border-brand-berry focus:outline-none';
+
 const API_BASE = process.env.API_URL ?? 'http://localhost:4000';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^[0-9+\s\-()]{7,20}$/;
 
 export function CheckoutClient() {
   const mounted = useHasHydrated();
@@ -88,6 +94,7 @@ export function CheckoutClient() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingForm>(EMPTY_SHIPPING);
+  const [touched, setTouched] = useState<Partial<Record<keyof ShippingForm, boolean>>>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
   const [couponCode, setCouponCode] = useState('');
   const [coupon, setCoupon] = useState<CouponValidation | null>(null);
@@ -96,25 +103,33 @@ export function CheckoutClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Shipping settings from admin
+  // Shipping settings
   const [defaultShipping, setDefaultShipping] = useState(350);
   const [freeThreshold, setFreeThreshold] = useState(5000);
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const discountAmount = coupon?.discountAmount ?? 0;
+  // Auto discount preview
+  const [autoDiscountAmount, setAutoDiscountAmount] = useState(0);
+  const [quantityDiscountAmount, setQuantityDiscountAmount] = useState(0);
+  const [spendThresholdDiscountAmount, setSpendThresholdDiscountAmount] = useState(0);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
-  // Estimate shipping using highest product-level shipping cost or store default
-  // This mirrors the backend logic exactly
+  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const couponDiscountAmount = coupon?.discountAmount ?? 0;
+  const totalDiscountAmount =
+    autoDiscountAmount + quantityDiscountAmount + spendThresholdDiscountAmount + couponDiscountAmount;
+  const subtotalAfterDiscount = Math.max(0, subtotal - totalDiscountAmount);
+
   const productShippingCosts = items
     .map((i) => (i as any).shippingCost as number | null | undefined)
     .filter((c): c is number => c !== null && c !== undefined);
   const estimatedShippingRate =
-    productShippingCosts.length > 0
-      ? Math.max(...productShippingCosts)
-      : defaultShipping;
-  const shippingAmount =
-    subtotal - discountAmount >= freeThreshold ? 0 : estimatedShippingRate;
-  const total = Math.max(0, subtotal - discountAmount) + shippingAmount;
+    productShippingCosts.length > 0 ? Math.max(...productShippingCosts) : defaultShipping;
+  const shippingAmount = subtotalAfterDiscount >= freeThreshold ? 0 : estimatedShippingRate;
+  const total = subtotalAfterDiscount + shippingAmount;
+
+  // Inline validation states
+  const emailInvalid = !!shipping.email && !EMAIL_RE.test(shipping.email);
+  const phoneInvalid = !!shipping.phone && !PHONE_RE.test(shipping.phone);
 
   // Load shipping settings
   useEffect(() => {
@@ -127,8 +142,36 @@ export function CheckoutClient() {
         if (data?.defaultShippingCost != null) setDefaultShipping(Number(data.defaultShippingCost));
         if (data?.freeShippingThreshold != null) setFreeThreshold(Number(data.freeShippingThreshold));
       })
-      .catch(() => {/* use defaults */});
+      .catch(() => {});
   }, [token]);
+
+  // Fetch auto discount preview whenever items or coupon changes
+  useEffect(() => {
+    if (items.length === 0) return;
+    setPreviewLoading(true);
+    storefrontApi
+      .previewCart(
+        {
+          items: items.map((i) => ({
+            productId: i.productId,
+            variantId: i.variantId ?? null,
+            quantity: i.quantity,
+          })),
+          couponCode: coupon?.code ?? null,
+        },
+        token
+      )
+      .then((result) => {
+        setAutoDiscountAmount(result.autoDiscountAmount);
+        setQuantityDiscountAmount(result.quantityDiscountAmount);
+        setSpendThresholdDiscountAmount(result.spendThresholdDiscountAmount);
+        if (result.coupon && !coupon) {
+          setCoupon(result.coupon);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setPreviewLoading(false));
+  }, [items, token, coupon?.code]);
 
   useEffect(() => {
     if (!hydrated || !token) return;
@@ -139,7 +182,7 @@ export function CheckoutClient() {
         const def = data.find((a) => a.isDefault) ?? data[0];
         if (def) setSelectedAddressId(def.id);
       })
-      .catch(() => {/* ignore */});
+      .catch(() => {});
   }, [token, hydrated]);
 
   useEffect(() => {
@@ -203,8 +246,10 @@ export function CheckoutClient() {
   function validateGuest(): string | null {
     if (token) return null;
     if (!shipping.email.trim()) return 'Email is required';
+    if (!EMAIL_RE.test(shipping.email.trim())) return 'Please enter a valid email address';
     if (!shipping.fullName.trim()) return 'Full name is required';
     if (!shipping.phone.trim()) return 'Phone is required';
+    if (!PHONE_RE.test(shipping.phone.trim())) return 'Please enter a valid phone number';
     if (!shipping.addressLine1.trim()) return 'Address is required';
     if (!shipping.city.trim()) return 'City is required';
     if (!shipping.district.trim()) return 'District is required';
@@ -300,8 +345,7 @@ export function CheckoutClient() {
               </h2>
               <p className="mb-3 text-[0.85rem] text-brand-ink-soft">
                 No account? No problem. We&apos;ll create one for you with your email so you can
-                track this order.
-                {' '}
+                track this order.{' '}
                 <Link href="/login?next=/checkout" className="font-semibold text-brand-indigo">
                   Sign in instead
                 </Link>
@@ -362,18 +406,28 @@ export function CheckoutClient() {
 
             {(!token || addresses.length === 0) && (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {/* Email */}
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Email
                   </label>
                   <input
                     type="email"
-                    className={inputClass}
+                    className={emailInvalid && touched.email ? inputErrorClass : inputClass}
                     value={shipping.email}
                     onChange={(e) => setShipping((s) => ({ ...s, email: e.target.value }))}
+                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                    placeholder="name@example.com"
                     required
                   />
+                  {emailInvalid && touched.email && (
+                    <p className="mt-1 text-[0.76rem] text-brand-berry">
+                      Please enter a valid email address (e.g. name@example.com)
+                    </p>
+                  )}
                 </div>
+
+                {/* Full name */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Full name
@@ -385,17 +439,28 @@ export function CheckoutClient() {
                     required
                   />
                 </div>
+
+                {/* Phone */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Phone
                   </label>
                   <input
-                    className={inputClass}
+                    className={phoneInvalid && touched.phone ? inputErrorClass : inputClass}
                     value={shipping.phone}
                     onChange={(e) => setShipping((s) => ({ ...s, phone: e.target.value }))}
+                    onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                    placeholder="e.g. 0771234567 or +94771234567"
                     required
                   />
+                  {phoneInvalid && touched.phone && (
+                    <p className="mt-1 text-[0.76rem] text-brand-berry">
+                      Please enter a valid phone number (e.g. 0771234567 or +94771234567)
+                    </p>
+                  )}
                 </div>
+
+                {/* Address line 1 */}
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Address line 1
@@ -407,6 +472,8 @@ export function CheckoutClient() {
                     required
                   />
                 </div>
+
+                {/* Address line 2 */}
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Address line 2 (optional)
@@ -417,6 +484,8 @@ export function CheckoutClient() {
                     onChange={(e) => setShipping((s) => ({ ...s, addressLine2: e.target.value }))}
                   />
                 </div>
+
+                {/* City */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     City
@@ -428,6 +497,8 @@ export function CheckoutClient() {
                     required
                   />
                 </div>
+
+                {/* District */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     District
@@ -439,6 +510,8 @@ export function CheckoutClient() {
                     required
                   />
                 </div>
+
+                {/* Postal code */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Postal code
@@ -581,27 +654,56 @@ export function CheckoutClient() {
               <dt className="text-brand-ink-soft">Subtotal</dt>
               <dd>{formatLKR(subtotal)}</dd>
             </div>
-            {discountAmount > 0 && (
+
+            {autoDiscountAmount > 0 && (
               <div className="flex justify-between text-brand-olive">
-                <dt>Discount</dt>
-                <dd>−{formatLKR(discountAmount)}</dd>
+                <dt>Category discount</dt>
+                <dd>−{formatLKR(autoDiscountAmount)}</dd>
               </div>
             )}
+
+            {quantityDiscountAmount > 0 && (
+              <div className="flex justify-between text-brand-olive">
+                <dt>Quantity discount</dt>
+                <dd>−{formatLKR(quantityDiscountAmount)}</dd>
+              </div>
+            )}
+
+            {spendThresholdDiscountAmount > 0 && (
+              <div className="flex justify-between text-brand-olive">
+                <dt>Spend reward</dt>
+                <dd>−{formatLKR(spendThresholdDiscountAmount)}</dd>
+              </div>
+            )}
+
+            {couponDiscountAmount > 0 && (
+              <div className="flex justify-between text-brand-olive">
+                <dt>Coupon ({coupon?.code})</dt>
+                <dd>−{formatLKR(couponDiscountAmount)}</dd>
+              </div>
+            )}
+
             <div className="flex justify-between">
               <dt className="text-brand-ink-soft">Shipping</dt>
               <dd>
                 {shippingAmount === 0 ? (
-                  <span className="text-brand-olive font-semibold">Free</span>
+                  <span className="font-semibold text-brand-olive">Free</span>
                 ) : (
                   formatLKR(shippingAmount)
                 )}
               </dd>
             </div>
-            {shippingAmount > 0 && subtotal - discountAmount < freeThreshold && (
+
+            {shippingAmount > 0 && subtotalAfterDiscount < freeThreshold && (
               <div className="text-[0.76rem] text-brand-ink-soft">
-                Add {formatLKR(freeThreshold - (subtotal - discountAmount))} more for free shipping
+                Add {formatLKR(freeThreshold - subtotalAfterDiscount)} more for free shipping
               </div>
             )}
+
+            {previewLoading && (
+              <div className="text-[0.76rem] text-brand-ink-soft">Calculating discounts…</div>
+            )}
+
             <div className="flex justify-between border-t border-brand-line pt-2 text-[1rem] font-bold">
               <dt>Total</dt>
               <dd>{formatLKR(total)}</dd>

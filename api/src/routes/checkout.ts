@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { optionalAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { OrderController } from '../controllers/OrderController';
-import { checkoutSchema, couponValidateSchema } from '../types/accountSchemas';
+import { checkoutSchema, couponValidateSchema, cartPreviewSchema } from '../types/accountSchemas';
 
 export const checkoutRouter = Router();
 const controller = new OrderController();
@@ -17,4 +17,10 @@ checkoutRouter.post(
   '/validate-coupon',
   validateBody(couponValidateSchema),
   controller.validateCoupon
+);
+checkoutRouter.post(
+  '/preview',
+  optionalAuth,
+  validateBody(cartPreviewSchema),
+  controller.preview
 );
