@@ -43,7 +43,10 @@ function defaultStages(): VariantStageFormValue[] {
 }
 
 export function MultiStageVariantManager({ value, onChange }: Props) {
-  const stages = value.length === 2 ? value : defaultStages();
+  // ✅ Fix: was `value.length === 2` which reset saved data to defaults on any
+  // re-render where both stages weren't loaded yet. Now only falls back when
+  // truly empty (first-time toggle).
+  const stages = value.length > 0 ? value : defaultStages();
 
   function updateStage(stageIdx: number, patch: Partial<VariantStageFormValue>) {
     onChange(stages.map((s, i) => (i === stageIdx ? { ...s, ...patch } : s)));
@@ -83,7 +86,7 @@ export function MultiStageVariantManager({ value, onChange }: Props) {
       const opts = s.options.map((o, oi) => (oi === optIdx ? { ...o, ...patch } : o));
       return { ...s, options: opts };
     });
-    // keep stage2 maxSelect in sync
+    // Keep stage 2 maxSelect in sync with highest selectCount across all Stage 1 options
     const stage1 = next[0];
     const maxCount = Math.max(1, ...stage1.options.map((o) => o.selectCount ?? 1));
     next[1] = { ...next[1], maxSelect: maxCount };

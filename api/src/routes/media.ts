@@ -27,6 +27,9 @@ mediaRouter.get('/*', async (req: Request, res: Response) => {
     const contentType = object.ContentType ?? 'application/octet-stream';
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    // Allow any origin to display this image (Vercel frontend → VPS backend).
+    // Without this, browsers enforce CORP and block cross-origin <img> renders.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     (object.Body as any).pipe(res);
   } catch (err: any) {
     if (err.name === 'NoSuchKey') return res.status(404).json({ error: 'Not found' });

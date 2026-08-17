@@ -203,8 +203,10 @@ export class ProductService {
       input.variants.map((v, i) => this.toVariantWrite(v, i)),
       input.additionalCategoryIds ?? []
     );
-    if (input.hasMultiStageVariants && input.variantStages?.length) {
-      await this.productRepo.updateVariantStages(created.id, input.variantStages);
+    // ✅ Fix: always call updateVariantStages when hasMultiStageVariants is true,
+    // even if stages array is empty (e.g. toggled on but not yet populated)
+    if (input.hasMultiStageVariants) {
+      await this.productRepo.updateVariantStages(created.id, input.variantStages ?? []);
     }
     return this.getForAdmin(created.id);
   }
@@ -248,9 +250,11 @@ export class ProductService {
       input.variants.map((v, i) => this.toVariantWrite(v, i)),
       input.additionalCategoryIds ?? []
     );
-    if (input.hasMultiStageVariants && input.variantStages?.length) {
-      await this.productRepo.updateVariantStages(id, input.variantStages);
-    } else if (!input.hasMultiStageVariants) {
+    // ✅ Fix: always call updateVariantStages when hasMultiStageVariants is true,
+    // even if stages array is empty — avoids silently skipping updates
+    if (input.hasMultiStageVariants) {
+      await this.productRepo.updateVariantStages(id, input.variantStages ?? []);
+    } else {
       await prisma.variantStage.deleteMany({ where: { productId: id } });
     }
     return this.getForAdmin(id);
