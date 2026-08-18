@@ -81,6 +81,11 @@ export function MultiStageSelector({ stages, onChange }: Props) {
 
   if (!stage1 || !stage2) return null;
 
+  // Count how many Stage 2 options currently have stock.
+  // Stage 1 availability is derived from this — Stage 1 options don't carry
+  // their own stock; stock is tracked per Stage 2 item.
+  const inStockS2Count = stage2.options.filter((o) => o.stockQuantity > 0).length;
+
   return (
     <div className="space-y-5">
       {/* Stage 1 */}
@@ -91,7 +96,12 @@ export function MultiStageSelector({ stages, onChange }: Props) {
         <div className="flex flex-wrap gap-2">
           {stage1.options.map((opt) => {
             const isSelected = selectedS1Id === opt.id;
-            const outOfStock = opt.stockQuantity === 0;
+            // A Stage 1 option is out of stock only when there aren't enough
+            // in-stock Stage 2 options to fulfil its required selectCount.
+            // We never use opt.stockQuantity here — it is always 0 because
+            // Stage 1 options have no per-item stock in the data model.
+            const requiredForThisOption = opt.selectCount ?? 1;
+            const outOfStock = inStockS2Count < requiredForThisOption;
             return (
               <button
                 key={opt.id}
@@ -168,7 +178,6 @@ export function MultiStageSelector({ stages, onChange }: Props) {
               );
             })}
           </div>
-
           {selectedS2Ids.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {selectedS2Ids.map((id) => {

@@ -74,7 +74,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           productId: product.id,
           variantId: null,
           variantLabel: multiStageValue.displayLabel,
-          stageOptionIds: multiStageValue.stage2OptionIds, // passed for stock decrement
+          stageOptionIds: multiStageValue.stage2OptionIds,
           name: product.name,
           price: activePrice,
           imageUrl: product.images[0]?.url ?? null,
@@ -195,8 +195,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
       <div className="mt-6 border-t border-brand-line pt-5">
         <h2 className="mb-3 font-chewy text-[1.1rem] text-brand-indigo">About this kit</h2>
+        {/* ✅ Fix: dangerouslySetInnerHTML to render TipTap HTML. Prose plugin not
+            installed so element styles are applied via Tailwind arbitrary selectors. */}
         <div
-          className="prose prose-sm max-w-none text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-brand-indigo [&_h2]:font-chewy [&_h2]:text-brand-indigo [&_h3]:font-semibold [&_h3]:text-brand-ink [&_img]:rounded-[12px] [&_img]:my-3"
+          className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:rounded-[12px] [&_img]:my-3"
           dangerouslySetInnerHTML={{ __html: product.description }}
         />
       </div>
