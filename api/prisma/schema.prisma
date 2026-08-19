@@ -310,6 +310,7 @@ model OrderItem {
   price     Decimal         @db.Decimal(10, 2)
   quantity  Int
   lineTotal Decimal         @db.Decimal(10, 2)
+  stageOptionIds String[]        @default([])
   createdAt DateTime        @default(now())
 
   @@index([orderId])
