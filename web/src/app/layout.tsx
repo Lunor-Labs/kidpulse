@@ -27,11 +27,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${baloo.variable} ${fredoka.variable} ${chewy.variable}`}>
-      <body className="font-sans antialiased">
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <AuthProvider>
           <AnnouncementBar />
           <SiteHeader />
-          <main>{children}</main>
+          <main className="flex-1">{children}</main>
           <SiteFooter />
           <Toaster position="bottom-center" richColors />
         </AuthProvider>
