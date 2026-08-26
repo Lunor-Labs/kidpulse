@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FacebookIcon, InstagramIcon, WhatsappIcon } from './SocialIcons';
 
 const COLUMNS = [
   {
@@ -39,9 +40,9 @@ const COLUMNS = [
 ] as const;
 
 const SOCIAL = [
-  { label: 'FB', href: '#' },
-  { label: 'IG', href: '#' },
-  { label: 'WA', href: '#' },
+  { label: 'Facebook', href: '#', Icon: FacebookIcon },
+  { label: 'Instagram', href: '#', Icon: InstagramIcon },
+  { label: 'WhatsApp', href: '#', Icon: WhatsappIcon },
 ];
 
 export function SiteFooter() {
@@ -63,14 +64,14 @@ export function SiteFooter() {
 
           {/* Social links */}
           <div className="flex gap-[10px]">
-            {SOCIAL.map(({ label, href }) => (
+            {SOCIAL.map(({ label, href, Icon }) => (
               <Link
                 key={label}
                 href={href}
                 aria-label={label}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/[0.08] text-[0.85rem] font-bold text-white/70 transition-colors duration-200 hover:bg-brand-sky hover:text-brand-indigo"
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/[0.08] text-white/70 transition-colors duration-200 hover:bg-brand-sky hover:text-brand-indigo"
               >
-                {label}
+                <Icon className="h-4 w-4" />
               </Link>
             ))}
           </div>
