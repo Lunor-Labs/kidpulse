@@ -12,8 +12,11 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const API_URL = process.env.API_URL?.trim().replace(/\/+$/, '') || 'http://localhost:4000';
 
 const nextConfig: NextConfig = {
-  env: { API_URL },
-images: {
+  env: {
+    API_URL,
+    NEXT_PUBLIC_API_URL: API_URL,
+  },
+  images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: 'web-peuxf8afd0boyagnnycxwjck.51.79.165.223.sslip.io' },
