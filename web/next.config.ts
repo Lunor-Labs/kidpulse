@@ -13,14 +13,12 @@ const API_URL = process.env.API_URL?.trim().replace(/\/+$/, '') || 'http://local
 
 const nextConfig: NextConfig = {
   env: { API_URL },
-  images: {
+images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      { protocol: 'http', hostname: '127.0.0.1', port: '54321', pathname: '/storage/v1/object/public/**' },
-      { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/object/public/**' },
-      { protocol: 'https', hostname: 's3-ub46vtahora5iaoyry6x5pud.139.99.155.129.sslip.io' },
-      { protocol: 'https', hostname: 'web-ub46vtahora5iaoyry6x5pud.139.99.155.129.sslip.io' },
-      { protocol: 'https', hostname: 'kidpulse-api-dev.lunorlabs.com' },
+      { protocol: 'https', hostname: 'web-peuxf8afd0boyagnnycxwjck.51.79.165.223.sslip.io' },
+      { protocol: 'https', hostname: 's3-peuxf8afd0boyagnnycxwjck.51.79.165.223.sslip.io' },
+      { protocol: 'https', hostname: 'kidpulse-api.lunorlabs.com' },
     ],
   },
 };
