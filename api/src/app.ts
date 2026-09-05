@@ -52,6 +52,21 @@ const adminLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Image traffic does not fan out one request per visitor: on Vercel the Next
+// image optimizer fetches every remote image server-side, so the whole site's
+// images arrive from a handful of egress IPs and share a single rate-limit
+// bucket. Under the general 300/15min budget that is spent within minutes and
+// every later image gets a 429 — which a browser renders as a blank product
+// image rather than an error, so it reads as "the upload did not work".
+// Mounted ahead of the general limiter with a budget sized for that fan-in.
+const mediaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/media', mediaLimiter, mediaRouter);
+
 app.use(generalLimiter);
 
 // `/me` is hit on every page load by the web AuthProvider, so it stays on the
@@ -74,6 +89,5 @@ app.use('/api/v1/admin', adminLimiter, adminRouter);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
-app.use('/media', mediaRouter);
 
 app.use(errorHandler);
