@@ -46,6 +46,28 @@ export class CategoryRepository {
     return prisma.category.update({ where: { id }, data });
   }
 
+  /**
+   * A soft-deleted row keeps its slug, and the unique index does not care that
+   * the row is deleted — so the slug stays taken by a row that findBySlug()
+   * deliberately cannot see. Renaming it out of the way is what lets an admin
+   * delete a category and add another under the same name.
+   *
+   * Suffixed with the row id, which is unique by definition, so this can never
+   * collide with a live slug or with another released one.
+   */
+  async releaseSlug(id: string, slug: string) {
+    return prisma.category.update({
+      where: { id },
+      data: { slug: `${slug}__deleted__${id}` },
+    });
+  }
+
+  async findDeletedBySlug(slug: string) {
+    return prisma.category.findFirst({
+      where: { slug, deletedAt: { not: null } },
+    });
+  }
+
   async softDelete(id: string) {
     return prisma.category.update({
       where: { id },

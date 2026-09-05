@@ -153,6 +153,25 @@ export class ProductRepository {
     });
   }
 
+  /**
+   * Same trap as findBySkuOrSlug's deletedAt filter, from the other side: a
+   * soft-deleted product still holds its sku and slug in their unique indexes.
+   * Returns every deleted row occupying either, since the sku and the slug can
+   * be held by two different dead rows.
+   */
+  async findDeletedBySkuOrSlug(sku: string, slug: string) {
+    return prisma.product.findMany({
+      where: { deletedAt: { not: null }, OR: [{ sku }, { slug }] },
+    });
+  }
+
+  async releaseSkuAndSlug(id: string, sku: string, slug: string) {
+    return prisma.product.update({
+      where: { id },
+      data: { sku: `${sku}__deleted__${id}`, slug: `${slug}__deleted__${id}` },
+    });
+  }
+
   async createWithImages(
     data: Prisma.ProductUncheckedCreateInput,
     images: Array<{ url: string; altText: string | null; sortOrder: number }>,

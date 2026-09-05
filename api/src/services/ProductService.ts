@@ -169,10 +169,29 @@ export class ProductService {
     return this.toAdminDto(row, ratings);
   }
 
+  /**
+   * findBySkuOrSlug() filters out soft-deleted rows, but the database's unique
+   * indexes on sku and slug do not — so identifiers held by a deleted product
+   * pass the duplicate check above and then fail the insert with P2002. Free
+   * them first.
+   *
+   * The dead row keeps its own id, so orders and reviews that reference it stay
+   * pointed at the product the customer actually bought, rather than being
+   * inherited by whatever new product reuses the SKU.
+   */
+  private async releaseDeletedSkuAndSlug(sku: string, slug: string): Promise<void> {
+    const deleted = await this.productRepo.findDeletedBySkuOrSlug(sku, slug);
+    for (const row of deleted) {
+      logger.info({ id: row.id, sku: row.sku, slug: row.slug }, 'Releasing sku/slug held by a deleted product');
+      await this.productRepo.releaseSkuAndSlug(row.id, row.sku, row.slug);
+    }
+  }
+
   async create(input: ProductUpsertInput): Promise<AdminProductDto> {
     this.assertAgeRange(input);
     const dupe = await this.productRepo.findBySkuOrSlug(input.sku, input.slug);
     if (dupe) throw new AppError('A product with this SKU or slug already exists', 409);
+    await this.releaseDeletedSkuAndSlug(input.sku, input.slug);
     const created = await this.productRepo.createWithImages(
       {
         name: input.name,
@@ -218,6 +237,7 @@ export class ProductService {
     if (input.sku !== existing.sku || input.slug !== existing.slug) {
       const dupe = await this.productRepo.findBySkuOrSlug(input.sku, input.slug);
       if (dupe && dupe.id !== id) throw new AppError('A product with this SKU or slug already exists', 409);
+      await this.releaseDeletedSkuAndSlug(input.sku, input.slug);
     }
     await this.productRepo.updateWithImages(
       id,

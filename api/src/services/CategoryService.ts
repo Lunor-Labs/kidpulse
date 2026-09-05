@@ -61,9 +61,25 @@ export class CategoryService {
     return toAdminDto(withCount);
   }
 
+  /**
+   * findBySlug() filters out soft-deleted rows, but the database's unique index
+   * does not — so a slug held by a deleted category passes the duplicate check
+   * above and then fails the insert with P2002. Free it first.
+   *
+   * Done lazily, only when the name is actually reclaimed, so a deleted row
+   * keeps its readable slug until something needs it back.
+   */
+  private async releaseDeletedSlug(slug: string): Promise<void> {
+    const deleted = await this.categoryRepo.findDeletedBySlug(slug);
+    if (!deleted) return;
+    logger.info({ id: deleted.id, slug }, 'Releasing slug held by a deleted category');
+    await this.categoryRepo.releaseSlug(deleted.id, deleted.slug);
+  }
+
   async create(input: CategoryUpsertInput): Promise<AdminCategoryDto> {
     const dupe = await this.categoryRepo.findBySlug(input.slug);
     if (dupe) throw new AppError('A category with this slug already exists', 409);
+    await this.releaseDeletedSlug(input.slug);
     const created = await this.categoryRepo.create({
       name: input.name,
       slug: input.slug,
@@ -85,6 +101,7 @@ export class CategoryService {
       if (dupe && dupe.id !== id) {
         throw new AppError('A category with this slug already exists', 409);
       }
+      await this.releaseDeletedSlug(input.slug);
     }
     await this.categoryRepo.update(id, {
       name: input.name,
