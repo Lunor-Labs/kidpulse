@@ -10,7 +10,11 @@
  * what the customer saw at purchase time, not a live product reference.
  *
  * Usage (from api/, loads ../.env):
- *   npm run fix-media-urls -- --from <old-host-or-prefix> --to <new-host-or-prefix>
+ *   npm run media:fix-urls -- --from <old-host-or-prefix> --to <new-host-or-prefix>
+ *
+ * In a deployed container (runs the compiled dist/, no tsx or dotenv needed —
+ * production installs --omit=dev, so the dotenv-backed scripts are unavailable):
+ *   npm run fix-media-urls -- --from <old-prefix> --to <new-prefix>
  *
  * Prints a per-table count of matching rows and does nothing else unless
  * --apply is passed. Re-running after --apply finds zero matches, so it is
@@ -18,7 +22,7 @@
  *
  * Example — the URL baked in while S3_PUBLIC_URL pointed at the storage
  * host directly, needing to move to the API's /media proxy:
- *   npm run fix-media-urls -- \
+ *   npm run media:fix-urls -- \
  *     --from https://web-peuxf8afd0boyagnnycxwjck.51.79.165.223.sslip.io/kidpulse-media \
  *     --to https://kidpulse-api.lunorlabs.com/media \
  *     --apply

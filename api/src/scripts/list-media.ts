@@ -14,8 +14,9 @@
  *   npm run media:ls -- --prefix banners --limit 20
  *   npm run media:ls -- --check          # HEAD each public URL, report status
  *
- * In a deployed container (compiled, no tsx needed):
- *   node dist/scripts/list-media.js --prefix products
+ * In a deployed container (runs the compiled dist/, no tsx or dotenv needed —
+ * production installs --omit=dev, so the dotenv-backed scripts are unavailable):
+ *   npm run list-media -- --check
  *
  * --check is the one that answers "is this image actually reachable?" — it
  * follows the same URL a browser would, so a non-200 there is exactly what a
