@@ -1,7 +1,5 @@
 export const NAV_LINKS = [
   { label: 'All Products', href: '/products' },
-  { label: 'Painting Kits', href: '/products?category=painting-kits' },
-  { label: 'STEM Kits', href: '/products?category=stem-kits' },
   { label: 'About Us', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ] as const;
@@ -19,6 +17,7 @@ export const ADMIN_NAV_LINKS: AdminNavLink[] = [
   { href: '/admin/products', label: 'Products' },
   { href: '/admin/categories', label: 'Categories' },
   { href: '/admin/banners', label: 'Home banners', dropdownOnly: true },
+  { href: '/admin/moments', label: 'Moments gallery', dropdownOnly: true },
   { href: '/admin/product-banners', label: 'Product banners', dropdownOnly: true },
   { href: '/admin/coupons', label: 'Coupons', dropdownOnly: true },
   { href: '/admin/discounts', label: 'Auto-discounts', dropdownOnly: true },

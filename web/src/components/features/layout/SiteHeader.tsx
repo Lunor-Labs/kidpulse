@@ -24,7 +24,7 @@ export function SiteHeader() {
 
       <SearchBar />
 
-      <div className="flex shrink-0 items-center gap-5 text-[0.9rem] font-semibold text-white max-[980px]:gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-5 text-[0.9rem] font-semibold text-white max-[980px]:gap-3">
         <WishlistLink />
         <CartButton />
         <HeaderAccountMenu />

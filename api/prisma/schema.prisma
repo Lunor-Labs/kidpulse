@@ -489,3 +489,16 @@ model ProductCategory {
   @@index([categoryId])
   @@map("product_categories")
 }
+
+model MomentsGalleryItem {
+  id        String    @id @default(cuid())
+  imageUrl  String
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive, deletedAt, sortOrder])
+  @@map("moments_gallery_items")
+}

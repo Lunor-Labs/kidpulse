@@ -233,3 +233,11 @@ export const imageUploadSchema = z.object({
 export type CategoryUpsertInput = z.infer<typeof categoryUpsertSchema>;
 export type ProductUpsertInput = z.infer<typeof productUpsertSchema>;
 export type ImageUploadInput = z.infer<typeof imageUploadSchema>;
+
+
+export const momentsGalleryItemSchema = z.object({
+  imageUrl: z.string().trim().url(),
+  sortOrder: z.number().int().min(0).max(9999).optional(),
+  isActive: z.boolean().optional(),
+});
+export type MomentsGalleryItemInput = z.infer<typeof momentsGalleryItemSchema>;
