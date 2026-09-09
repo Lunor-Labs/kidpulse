@@ -16,6 +16,8 @@ interface MomentsItem {
   updatedAt: string;
 }
 
+const API = process.env.NEXT_PUBLIC_API_URL;
+
 export function MomentsListClient() {
   const token = useAuthStore((s) => s.accessToken);
   const hydrated = useAuthStore((s) => s.hydrated);
@@ -28,7 +30,7 @@ export function MomentsListClient() {
   useEffect(() => {
     if (!hydrated) return;
     let ignore = false;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/moments`, {
+    fetch(`${API}/api/v1/admin/moments`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
@@ -46,7 +48,7 @@ export function MomentsListClient() {
         { filename: file.name, contentType: file.type, dataBase64, folder: 'products' },
         token
       );
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/moments`, {
+      const res = await fetch(`${API}/api/v1/admin/moments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,6 +60,7 @@ export function MomentsListClient() {
           isActive: true,
         }),
       });
+      if (!res.ok) throw new Error('Failed to save image');
       const d = await res.json();
       setRows((prev) => [...(prev ?? []), d.data]);
       toast.success('Image added to gallery');
@@ -71,17 +74,19 @@ export function MomentsListClient() {
 
   async function handleToggle(item: MomentsItem) {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/moments/${item.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ imageUrl: item.imageUrl, sortOrder: item.sortOrder, isActive: !item.isActive }),
-        }
-      );
+      const res = await fetch(`${API}/api/v1/admin/moments/${item.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          imageUrl: item.imageUrl,
+          sortOrder: item.sortOrder,
+          isActive: !item.isActive,
+        }),
+      });
+      if (!res.ok) throw new Error('Update failed');
       const d = await res.json();
       setRows((prev) => prev?.map((r) => (r.id === item.id ? d.data : r)) ?? null);
       toast.success(d.data.isActive ? 'Item shown' : 'Item hidden');
@@ -94,10 +99,11 @@ export function MomentsListClient() {
     if (!confirm('Remove this image from the gallery?')) return;
     setDeletingId(id);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/moments/${id}`, {
+      const res = await fetch(`${API}/api/v1/admin/moments/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error('Delete failed');
       setRows((prev) => prev?.filter((r) => r.id !== id) ?? null);
       toast.success('Image removed');
     } catch (err) {
@@ -111,19 +117,26 @@ export function MomentsListClient() {
     const item = rows?.find((r) => r.id === id);
     if (!item) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/moments/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ imageUrl: item.imageUrl, isActive: item.isActive, sortOrder }),
-        }
-      );
+      const res = await fetch(`${API}/api/v1/admin/moments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          imageUrl: item.imageUrl,
+          isActive: item.isActive,
+          sortOrder,
+        }),
+      });
+      if (!res.ok) throw new Error('Update failed');
       const d = await res.json();
-      setRows((prev) => prev?.map((r) => (r.id === id ? d.data : r)).sort((a, b) => a.sortOrder - b.sortOrder) ?? null);
+      setRows((prev) =>
+        prev
+          ?.map((r) => (r.id === id ? d.data : r))
+          .sort((a, b) => a.sortOrder - b.sortOrder) ?? null
+      );
+      toast.success('Sort order updated');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Update failed');
     }
@@ -149,7 +162,10 @@ export function MomentsListClient() {
         type="file"
         accept="image/png,image/jpeg,image/webp"
         className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleUpload(f);
+        }}
       />
 
       {error && (

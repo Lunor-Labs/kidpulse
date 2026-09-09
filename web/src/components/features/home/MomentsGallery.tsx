@@ -10,7 +10,7 @@ async function getMomentsItems(): Promise<MomentsItem[]> {
   try {
     const res = await fetch(
       `${process.env.API_URL}/api/v1/moments`,
-      { next: { revalidate: 60 } }
+      { cache: 'no-store' }
     );
     if (!res.ok) return [];
     const json = await res.json();
@@ -20,7 +20,6 @@ async function getMomentsItems(): Promise<MomentsItem[]> {
   }
 }
 
-// Fixed card layout — 11 slots matching the bento grid
 const CARD_CLASSES = [
   'rounded-[20px] overflow-hidden md:[grid-column:1] md:[grid-row:1]',
   'rounded-[20px] overflow-hidden md:[grid-column:2/4] md:[grid-row:1]',
@@ -35,7 +34,6 @@ const CARD_CLASSES = [
   'rounded-[20px] overflow-hidden md:[grid-column:5/7] md:[grid-row:4]',
 ];
 
-// Fallback colours when no image is uploaded yet for a slot
 const FALLBACK_COLORS = [
   'bg-brand-berry',
   'bg-brand-sky',
@@ -51,7 +49,9 @@ const FALLBACK_COLORS = [
 ];
 
 export async function MomentsGallery() {
-  const items = await getMomentsItems();
+  const rawItems = await getMomentsItems();
+  // Sort by sortOrder ascending so slot 0 = lowest sortOrder
+  const items = [...rawItems].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <section className="bg-white px-5 py-[60px] sm:px-8">
