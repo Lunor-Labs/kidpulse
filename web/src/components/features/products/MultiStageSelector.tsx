@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useState } from 'react';
+import type { StageSelection } from '@/stores/cartStore';
 
 export interface StageOption {
   id: string;
@@ -8,6 +10,7 @@ export interface StageOption {
   selectCount?: number | null;
   priceOverride?: number | null;
   stockQuantity: number;
+  imageUrl?: string | null;
   sortOrder: number;
 }
 
@@ -22,191 +25,256 @@ export interface VariantStage {
 export interface MultiStageSelectorValue {
   stage1OptionId: string;
   stage1Label: string;
-  stage2OptionIds: string[];
-  stage2Labels: string[];
+  stageSelections: StageSelection[];
   priceOverride: number | null;
   displayLabel: string;
 }
 
 interface Props {
   stages: VariantStage[];
-  onChange: (value: MultiStageSelectorValue | null) => void;
+  onAddPack: (value: MultiStageSelectorValue) => void;
 }
 
-export function MultiStageSelector({ stages, onChange }: Props) {
+function CharacterPicker({
+  stage2,
+  packSize,
+  onConfirm,
+  onBack,
+}: {
+  stage2: VariantStage;
+  packSize: number;
+  onConfirm: (selections: StageSelection[]) => void;
+  onBack: () => void;
+}) {
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  const totalSelected = Object.values(quantities).reduce((a, b) => a + b, 0);
+  const remaining = packSize - totalSelected;
+
+  function setQty(optionId: string, qty: number) {
+    const opt = stage2.options.find((o) => o.id === optionId);
+    if (!opt) return;
+    const maxAllowed = Math.min(opt.stockQuantity, packSize);
+    const newQty = Math.max(0, Math.min(qty, maxAllowed));
+    const newTotalWithout = totalSelected - (quantities[optionId] ?? 0);
+    const canAdd = packSize - newTotalWithout;
+    const finalQty = Math.min(newQty, canAdd);
+    setQuantities((prev) => ({ ...prev, [optionId]: finalQty }));
+  }
+
+  function handleConfirm() {
+    const selections: StageSelection[] = Object.entries(quantities)
+      .filter(([, qty]) => qty > 0)
+      .map(([optionId, quantity]) => ({ optionId, quantity }));
+    onConfirm(selections);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[0.84rem] font-semibold text-brand-ink">{stage2.label}</p>
+        <span className={`text-[0.78rem] font-semibold ${remaining === 0 ? 'text-brand-olive' : 'text-brand-indigo'}`}>
+          {remaining === 0 ? '✔ Pack complete' : `${totalSelected}/${packSize} selected`}
+        </span>
+      </div>
+
+      <p className="text-[0.74rem] text-brand-ink-soft">
+        Set the quantity for each character. Total must equal {packSize}.
+      </p>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {stage2.options.map((opt) => {
+          const qty = quantities[opt.id] ?? 0;
+          const outOfStock = opt.stockQuantity === 0;
+          return (
+            <div
+              key={opt.id}
+              className={`flex items-center gap-3 rounded-[12px] border p-2.5 transition-colors ${
+                qty > 0
+                  ? 'border-brand-sky-deep bg-brand-sky-deep/5'
+                  : outOfStock
+                  ? 'border-brand-line bg-brand-cream/30 opacity-50'
+                  : 'border-brand-line bg-white'
+              }`}
+            >
+              {/* Character image */}
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/60">
+                {opt.imageUrl ? (
+                  <Image src={opt.imageUrl} alt={opt.label} fill sizes="48px" className="object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[1.4rem]">🎨</div>
+                )}
+              </div>
+
+              {/* Name + stock */}
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-[0.84rem] font-semibold text-brand-ink">{opt.label}</p>
+                <p className="text-[0.7rem] text-brand-ink-soft">
+                  {outOfStock ? 'Out of stock' : `${opt.stockQuantity} available`}
+                </p>
+              </div>
+
+              {/* Quantity control */}
+              {!outOfStock && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setQty(opt.id, qty - 1)}
+                    disabled={qty === 0}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-brand-line text-[0.9rem] font-bold text-brand-ink hover:bg-brand-cream disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="w-5 text-center text-[0.86rem] font-bold text-brand-ink">{qty}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQty(opt.id, qty + 1)}
+                    disabled={remaining === 0 || qty >= opt.stockQuantity}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-brand-line text-[0.9rem] font-bold text-brand-ink hover:bg-brand-cream disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-full border border-brand-line bg-white px-4 py-2 text-[0.84rem] font-semibold text-brand-ink hover:bg-brand-cream"
+        >
+          ← Back
+        </button>
+        <button
+          type="button"
+          disabled={remaining !== 0}
+          onClick={handleConfirm}
+          className="flex-1 rounded-full bg-brand-indigo px-4 py-2 text-[0.84rem] font-bold text-white hover:bg-brand-indigo/90 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {remaining === 0 ? '✔ Add this pack' : `Select ${remaining} more`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function MultiStageSelector({ stages, onAddPack }: Props) {
   const stage1 = stages.find((s) => s.stageOrder === 0);
   const stage2 = stages.find((s) => s.stageOrder === 1);
 
   const [selectedS1Id, setSelectedS1Id] = useState<string | null>(null);
-  const [selectedS2Ids, setSelectedS2Ids] = useState<string[]>([]);
+  const [step, setStep] = useState<'pack' | 'characters'>('pack');
+  const [addedPacks, setAddedPacks] = useState<MultiStageSelectorValue[]>([]);
 
   const selectedS1Option = stage1?.options.find((o) => o.id === selectedS1Id) ?? null;
-  const requiredPicks = selectedS1Option?.selectCount ?? 0;
+  const packSize = selectedS1Option?.selectCount ?? 0;
 
-  useEffect(() => {
-    if (!selectedS1Option || selectedS2Ids.length !== requiredPicks) {
-      onChange(null);
-      return;
-    }
-    const s2Labels = selectedS2Ids.map(
-      (id) => stage2?.options.find((o) => o.id === id)?.label ?? id
-    );
-    onChange({
-      stage1OptionId: selectedS1Option.id,
-      stage1Label: selectedS1Option.label,
-      stage2OptionIds: selectedS2Ids,
-      stage2Labels: s2Labels,
-      priceOverride: selectedS1Option.priceOverride ?? null,
-      displayLabel: `${selectedS1Option.label} — ${s2Labels.join(', ')}`,
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedS1Id, selectedS2Ids]);
+  const inStockS2Count = stage2?.options.filter((o) => o.stockQuantity > 0).length ?? 0;
 
-  function handleS1Select(optionId: string) {
+  function handlePackSelect(optionId: string) {
     setSelectedS1Id(optionId);
-    setSelectedS2Ids([]);
+    setStep('characters');
   }
 
-  function toggleS2(optionId: string) {
-    if (selectedS2Ids.includes(optionId)) {
-      setSelectedS2Ids((prev) => prev.filter((id) => id !== optionId));
-      return;
-    }
-    if (selectedS2Ids.length >= requiredPicks) {
-      setSelectedS2Ids((prev) => [...prev.slice(1), optionId]);
-      return;
-    }
-    setSelectedS2Ids((prev) => [...prev, optionId]);
+  function handleCharactersConfirm(selections: StageSelection[]) {
+    if (!selectedS1Option) return;
+    const labels = selections.map((sel) => {
+      const opt = stage2?.options.find((o) => o.id === sel.optionId);
+      return sel.quantity > 1 ? `${opt?.label} ×${sel.quantity}` : (opt?.label ?? sel.optionId);
+    });
+    const pack: MultiStageSelectorValue = {
+      stage1OptionId: selectedS1Option.id,
+      stage1Label: selectedS1Option.label,
+      stageSelections: selections,
+      priceOverride: selectedS1Option.priceOverride ?? null,
+      displayLabel: `${selectedS1Option.label} — ${labels.join(', ')}`,
+    };
+    setAddedPacks((prev) => [...prev, pack]);
+    onAddPack(pack);
+    setSelectedS1Id(null);
+    setStep('pack');
   }
 
   if (!stage1 || !stage2) return null;
 
-  // Count how many Stage 2 options currently have stock.
-  // Stage 1 availability is derived from this — Stage 1 options don't carry
-  // their own stock; stock is tracked per Stage 2 item.
-  const inStockS2Count = stage2.options.filter((o) => o.stockQuantity > 0).length;
-
   return (
-    <div className="space-y-5">
-      {/* Stage 1 */}
-      <div>
-        <div className="mb-2 text-[0.84rem] font-semibold text-brand-ink">
-          {stage1.label}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {stage1.options.map((opt) => {
-            const isSelected = selectedS1Id === opt.id;
-            // A Stage 1 option is out of stock only when there aren't enough
-            // in-stock Stage 2 options to fulfil its required selectCount.
-            // We never use opt.stockQuantity here — it is always 0 because
-            // Stage 1 options have no per-item stock in the data model.
-            const requiredForThisOption = opt.selectCount ?? 1;
-            const outOfStock = inStockS2Count < requiredForThisOption;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={outOfStock}
-                onClick={() => handleS1Select(opt.id)}
-                className={[
-                  'rounded-[10px] border px-4 py-2 text-[0.84rem] font-semibold transition-colors',
-                  isSelected
-                    ? 'border-brand-indigo bg-brand-indigo text-white'
-                    : outOfStock
-                    ? 'cursor-not-allowed border-brand-line bg-brand-cream/40 text-brand-ink-soft line-through opacity-60'
-                    : 'border-brand-line bg-white text-brand-ink hover:border-brand-indigo hover:text-brand-indigo',
-                ].join(' ')}
-              >
-                {opt.label}
-                {opt.priceOverride != null && (
-                  <span className="ml-1 text-[0.74rem] font-normal opacity-80">
-                    · Rs. {opt.priceOverride.toLocaleString('en-LK')}
-                  </span>
-                )}
-                {outOfStock && (
-                  <span className="ml-1 text-[0.72rem] font-normal">· Out of stock</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Stage 2 — only shown after Stage 1 selected */}
-      {selectedS1Option && (
-        <div>
-          <div className="mb-1 text-[0.84rem] font-semibold text-brand-ink">
-            {stage2.label}
-          </div>
-          <p className="mb-2 text-[0.76rem] text-brand-ink-soft">
-            Pick {requiredPicks}{' '}
-            {requiredPicks === 1 ? 'character' : 'characters'}
-            {selectedS2Ids.length > 0 && (
-              <span className="ml-1 font-semibold text-brand-indigo">
-                ({selectedS2Ids.length}/{requiredPicks} selected)
+    <div className="space-y-4">
+      {/* Added packs summary */}
+      {addedPacks.length > 0 && (
+        <div className="space-y-1">
+          {addedPacks.map((pack, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 rounded-[10px] bg-brand-olive/10 px-3 py-2 text-[0.78rem]"
+            >
+              <span className="text-brand-olive">✔</span>
+              <span className="font-semibold text-brand-ink">{pack.stage1Label}</span>
+              <span className="text-brand-ink-soft">—</span>
+              <span className="text-brand-ink-soft truncate">
+                {pack.stageSelections.map((sel) => {
+                  const opt = stage2.options.find((o) => o.id === sel.optionId);
+                  return sel.quantity > 1 ? `${opt?.label} ×${sel.quantity}` : opt?.label;
+                }).join(', ')}
               </span>
-            )}
+              <button
+                type="button"
+                onClick={() => setAddedPacks((prev) => prev.filter((_, pi) => pi !== i))}
+                className="ml-auto shrink-0 text-brand-ink-soft hover:text-brand-berry"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {step === 'pack' && (
+        <div>
+          <p className="mb-2 text-[0.84rem] font-semibold text-brand-ink">
+            {addedPacks.length > 0 ? `Add another ${stage1.label}` : stage1.label}
           </p>
           <div className="flex flex-wrap gap-2">
-            {stage2.options.map((opt) => {
-              const isSelected = selectedS2Ids.includes(opt.id);
-              const outOfStock = opt.stockQuantity === 0;
-              const atLimit = selectedS2Ids.length >= requiredPicks && !isSelected;
+            {stage1.options.map((opt) => {
+              const required = opt.selectCount ?? 1;
+              const outOfStock = inStockS2Count < required;
               return (
                 <button
                   key={opt.id}
                   type="button"
                   disabled={outOfStock}
-                  onClick={() => !outOfStock && toggleS2(opt.id)}
+                  onClick={() => handlePackSelect(opt.id)}
                   className={[
-                    'rounded-[10px] border px-3 py-2 text-[0.82rem] font-medium transition-colors',
-                    isSelected
-                      ? 'border-brand-sky-deep bg-brand-sky-deep text-white'
-                      : outOfStock
+                    'rounded-[10px] border px-4 py-2 text-[0.84rem] font-semibold transition-colors',
+                    outOfStock
                       ? 'cursor-not-allowed border-brand-line bg-brand-cream/40 text-brand-ink-soft line-through opacity-60'
-                      : atLimit
-                      ? 'cursor-pointer border-brand-line bg-white text-brand-ink-soft opacity-60 hover:opacity-100'
-                      : 'border-brand-line bg-white text-brand-ink hover:border-brand-sky-deep hover:text-brand-sky-deep',
+                      : 'border-brand-line bg-white text-brand-ink hover:border-brand-indigo hover:text-brand-indigo',
                   ].join(' ')}
                 >
-                  {isSelected && <span className="mr-1">✓</span>}
                   {opt.label}
-                  {outOfStock && (
-                    <span className="ml-1 text-[0.70rem]">· Out of stock</span>
+                  {opt.priceOverride != null && (
+                    <span className="ml-1 text-[0.74rem] font-normal opacity-80">
+                      · Rs. {opt.priceOverride.toLocaleString('en-LK')}
+                    </span>
                   )}
+                  {outOfStock && <span className="ml-1 text-[0.72rem] font-normal">· Out of stock</span>}
                 </button>
               );
             })}
           </div>
-          {selectedS2Ids.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {selectedS2Ids.map((id) => {
-                const opt = stage2.options.find((o) => o.id === id);
-                return (
-                  <span
-                    key={id}
-                    className="inline-flex items-center gap-1 rounded-full bg-brand-sky-deep/10 px-2 py-[2px] text-[0.74rem] font-semibold text-brand-sky-deep"
-                  >
-                    {opt?.label}
-                    <button
-                      type="button"
-                      onClick={() => toggleS2(id)}
-                      className="ml-[2px] text-brand-sky-deep/60 hover:text-brand-sky-deep"
-                    >
-                      ×
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          )}
-
-          {selectedS2Ids.length === requiredPicks && (
-            <p className="mt-2 text-[0.78rem] font-semibold text-brand-olive">
-              ✔ Selection complete
-            </p>
-          )}
         </div>
+      )}
+
+      {step === 'characters' && selectedS1Option && (
+        <CharacterPicker
+          stage2={stage2}
+          packSize={packSize}
+          onConfirm={handleCharactersConfirm}
+          onBack={() => { setSelectedS1Id(null); setStep('pack'); }}
+        />
       )}
     </div>
   );

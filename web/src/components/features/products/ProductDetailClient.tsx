@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCartStore } from '@/stores/cartStore';
+import type { StageSelection } from '@/stores/cartStore';
 import { VariantSelector } from './VariantSelector';
 import { QuantitySelector } from './QuantitySelector';
 import { WishlistButton } from './WishlistButton';
@@ -32,29 +33,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
     variants.find((v) => v.stockQuantity > 0) ?? variants[0] ?? null
   );
-  const [multiStageValue, setMultiStageValue] = useState<MultiStageSelectorValue | null>(null);
+  // ✅ accumulate multiple packs instead of a single selection
+  const [pendingPacks, setPendingPacks] = useState<MultiStageSelectorValue[]>([]);
   const [quantity, setQuantity] = useState(1);
 
   let activePrice = product.price;
   let activeCompareAt = product.compareAtPrice;
   let activeStock = product.stockQuantity;
 
-  if (hasMultiStage) {
-    if (multiStageValue?.priceOverride != null) {
-      activePrice = multiStageValue.priceOverride;
-    }
-    if (multiStageValue && product.variantStages) {
-      const stage2 = product.variantStages.find((s) => s.stageOrder === 1);
-      if (stage2) {
-        const selectedOptions = stage2.options.filter((o) =>
-          multiStageValue.stage2OptionIds.includes(o.id)
-        );
-        if (selectedOptions.length > 0) {
-          activeStock = Math.min(...selectedOptions.map((o) => o.stockQuantity));
-        }
-      }
-    }
-  } else if (hasVariants && selectedVariant) {
+  if (!hasMultiStage && hasVariants && selectedVariant) {
     activePrice = selectedVariant.price;
     activeCompareAt = selectedVariant.compareAtPrice;
     activeStock = selectedVariant.stockQuantity;
@@ -64,40 +51,44 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const pct = activeCompareAt ? discountPercent(activePrice, activeCompareAt) : null;
   const rating = product.avgRating ?? 0;
   const reviewCount = product.reviewCount ?? 0;
-  const multiStageReady = !hasMultiStage || multiStageValue !== null;
+  const multiStageReady = !hasMultiStage || pendingPacks.length > 0;
   const canAddToCart = !isOutOfStock && multiStageReady;
 
   const handleAddToCart = () => {
-    if (hasMultiStage && multiStageValue) {
-      addItem(
-        {
-          productId: product.id,
-          variantId: null,
-          variantLabel: multiStageValue.displayLabel,
-          stageOptionIds: multiStageValue.stage2OptionIds,
-          name: product.name,
-          price: activePrice,
-          imageUrl: product.images[0]?.url ?? null,
-        },
-        quantity
-      );
+    if (hasMultiStage && pendingPacks.length > 0) {
+      // ✅ Add each pack as a separate cart line
+      for (const pack of pendingPacks) {
+        addItem(
+          {
+            productId: product.id,
+            variantId: null,
+            variantLabel: pack.displayLabel,
+            stageSelections: pack.stageSelections,
+            name: product.name,
+            price: pack.priceOverride ?? product.price,
+            imageUrl: product.images[0]?.url ?? null,
+          },
+          1
+        );
+      }
+      setPendingPacks([]);
+      toast.success(`${pendingPacks.length} pack${pendingPacks.length > 1 ? 's' : ''} added to cart!`);
     } else {
       addItem(
         {
           productId: product.id,
           variantId: selectedVariant?.id ?? null,
           variantLabel: selectedVariant?.label ?? null,
-          stageOptionIds: null,
+          stageSelections: null,
           name: product.name,
           price: activePrice,
           imageUrl: selectedVariant?.imageUrl ?? product.images[0]?.url ?? null,
         },
         quantity
       );
+      toast.success(`${product.name} added to cart!`);
     }
-    toast.success(`${product.name} added to cart!`);
     setQuantity(1);
-    if (hasMultiStage) setMultiStageValue(null);
   };
 
   return (
@@ -157,7 +148,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         <div className="mb-5">
           <MultiStageSelector
             stages={product.variantStages as VariantStage[]}
-            onChange={setMultiStageValue}
+            onAddPack={(pack) => setPendingPacks((prev) => [...prev, pack])}
           />
         </div>
       ) : hasVariants ? (
@@ -171,7 +162,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         />
       ) : null}
 
-      {!isOutOfStock && (
+      {!isOutOfStock && !hasMultiStage && (
         <QuantitySelector
           quantity={quantity}
           maxQuantity={Math.min(activeStock, 10)}
@@ -186,17 +177,17 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       >
         {isOutOfStock
           ? '✕ Out of Stock'
-          : hasMultiStage && !multiStageValue
-            ? 'Select your characters to continue'
-            : '🛒 Add to Cart'}
+          : hasMultiStage && pendingPacks.length === 0
+            ? 'Select your pack to continue'
+            : hasMultiStage
+              ? `🛒 Add ${pendingPacks.length} pack${pendingPacks.length > 1 ? 's' : ''} to Cart`
+              : '🛒 Add to Cart'}
       </button>
 
       <WishlistButton productId={product.id} variant="bar" />
 
       <div className="mt-6 border-t border-brand-line pt-5">
         <h2 className="mb-3 font-chewy text-[1.1rem] text-brand-indigo">About this kit</h2>
-        {/* ✅ Fix: dangerouslySetInnerHTML to render TipTap HTML. Prose plugin not
-            installed so element styles are applied via Tailwind arbitrary selectors. */}
         <div
           className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:rounded-[12px] [&_img]:my-3"
           dangerouslySetInnerHTML={{ __html: product.description }}

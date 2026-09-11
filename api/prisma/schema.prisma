@@ -467,6 +467,7 @@ model VariantStageOption {
   selectCount   Int?
   priceOverride Decimal?     @db.Decimal(10, 2)
   stockQuantity Int          @default(0)
+  imageUrl      String?
   sortOrder     Int          @default(0)
   isActive      Boolean      @default(true)
   createdAt     DateTime     @default(now())

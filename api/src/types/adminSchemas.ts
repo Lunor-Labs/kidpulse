@@ -43,6 +43,7 @@ export const stageOptionInputSchema = z.object({
   selectCount: z.number().int().min(1).max(20).nullable().optional(),
   priceOverride: z.number().nonnegative().max(10_000_000).nullable().optional(),
   stockQuantity: z.number().int().min(0).max(1_000_000).default(0),
+  imageUrl: z.string().trim().url().nullable().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
   isActive: z.boolean().optional(),
 });
@@ -53,7 +54,6 @@ export const variantStageInputSchema = z.object({
   stageOrder: z.number().int().min(0).max(1),
   label: z.string().trim().min(1).max(80),
   maxSelect: z.number().int().min(1).max(20).default(1),
-  // ✅ Fix: removed .min(1) — Stage 2 can have 0 options on initial save
   options: z.array(stageOptionInputSchema).max(50).default([]),
 });
 export type VariantStageInput = z.infer<typeof variantStageInputSchema>;
@@ -61,7 +61,6 @@ export type VariantStageInput = z.infer<typeof variantStageInputSchema>;
 export const productUpsertSchema = z.object({
   name: z.string().trim().min(1).max(200),
   slug: slugRule,
-  // ✅ Fix: raised to 50000 to support TipTap HTML content
   description: z.string().trim().min(1).max(50000),
   price: z.number().nonnegative().max(10_000_000),
   compareAtPrice: z.number().nonnegative().max(10_000_000).nullable().optional(),
@@ -230,14 +229,13 @@ export const imageUploadSchema = z.object({
   folder: z.enum(['products', 'categories', 'banners', 'product-banners']).default('products'),
 });
 
-export type CategoryUpsertInput = z.infer<typeof categoryUpsertSchema>;
-export type ProductUpsertInput = z.infer<typeof productUpsertSchema>;
-export type ImageUploadInput = z.infer<typeof imageUploadSchema>;
-
-
 export const momentsGalleryItemSchema = z.object({
   imageUrl: z.string().trim().url(),
   sortOrder: z.number().int().min(0).max(9999).optional(),
   isActive: z.boolean().optional(),
 });
 export type MomentsGalleryItemInput = z.infer<typeof momentsGalleryItemSchema>;
+
+export type CategoryUpsertInput = z.infer<typeof categoryUpsertSchema>;
+export type ProductUpsertInput = z.infer<typeof productUpsertSchema>;
+export type ImageUploadInput = z.infer<typeof imageUploadSchema>;

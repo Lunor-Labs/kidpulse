@@ -26,7 +26,6 @@ export class OrderService {
     const shipping = await this.resolveShipping(user, input);
     const priced = await this.priceItems(input.items);
 
-    // Load global shipping settings
     const adminSettings = await prisma.adminSettings.findUnique({
       where: { id: 'singleton' },
       select: { defaultShippingCost: true, freeShippingThreshold: true },
@@ -60,8 +59,6 @@ export class OrderService {
     const discountAmount = pricing.totalDiscount;
     const subtotalAfterDiscount = Math.max(0, priced.subtotal - discountAmount);
 
-    // Shipping: free if subtotal meets threshold, otherwise use highest product-level
-    // shipping cost among cart items, falling back to global default
     let shippingAmount: number;
     if (subtotalAfterDiscount >= FREE_THRESHOLD) {
       shippingAmount = 0;
@@ -90,7 +87,6 @@ export class OrderService {
       createdAccount = result.created;
       emailVerificationSent = result.emailSent;
     }
-
     await this.profileService.ensureProfile(effectiveUser);
 
     const orderNumber = generateOrderNumber();
@@ -130,6 +126,8 @@ export class OrderService {
                 price: item.price,
                 quantity: item.quantity,
                 lineTotal: item.lineTotal,
+                // Store flat list of optionIds for record-keeping
+                stageOptionIds: item.stageSelections?.map((s) => s.optionId) ?? [],
               })),
             },
           },
@@ -145,7 +143,7 @@ export class OrderService {
               data: { stockQuantity: { decrement: item.quantity } },
             });
             productsWithVariantLines.add(item.productId);
-          } else if (!item.stageOptionIds?.length) {
+          } else if (!item.stageSelections?.length) {
             await tx.product.update({
               where: { id: item.productId },
               data: { stockQuantity: { decrement: item.quantity } },
@@ -165,13 +163,13 @@ export class OrderService {
           });
         }
 
-        // Multi-stage option stock decrement
+        // ✅ Multi-stage stock decrement — per character, per quantity selected
         for (const item of priced.items) {
-          if (item.stageOptionIds && item.stageOptionIds.length > 0) {
-            for (const optionId of item.stageOptionIds) {
+          if (item.stageSelections && item.stageSelections.length > 0) {
+            for (const sel of item.stageSelections) {
               await tx.variantStageOption.update({
-                where: { id: optionId },
-                data: { stockQuantity: { decrement: item.quantity } },
+                where: { id: sel.optionId },
+                data: { stockQuantity: { decrement: sel.quantity } },
               });
             }
           }
@@ -235,8 +233,9 @@ export class OrderService {
     });
     const byId = new Map(products.map((p) => [p.id, p]));
 
+    // ✅ Collect all optionIds from stageSelections for stock lookup
     const allStageOptionIds = items
-      .flatMap((i) => i.stageOptionIds ?? [])
+      .flatMap((i) => i.stageSelections?.map((s) => s.optionId) ?? [])
       .filter(Boolean);
     const stageOptionsMap = new Map<string, { id: string; stockQuantity: number; label: string }>();
     if (allStageOptionIds.length > 0) {
@@ -261,14 +260,15 @@ export class OrderService {
         throw new AppError(`Selected option of "${product.name}" is no longer available`, 400);
       }
 
-      const stageOptionIds = input.stageOptionIds ?? null;
-      if (stageOptionIds && stageOptionIds.length > 0) {
-        for (const optionId of stageOptionIds) {
-          const opt = stageOptionsMap.get(optionId);
+      // ✅ Validate stageSelections — check stock per character per quantity
+      const stageSelections = input.stageSelections ?? null;
+      if (stageSelections && stageSelections.length > 0) {
+        for (const sel of stageSelections) {
+          const opt = stageOptionsMap.get(sel.optionId);
           if (!opt) {
             throw new AppError(`A selected character for "${product.name}" is no longer available`, 400);
           }
-          if (opt.stockQuantity < input.quantity) {
+          if (opt.stockQuantity < sel.quantity) {
             throw new AppError(
               `Only ${opt.stockQuantity} left of "${opt.label}" for "${product.name}"`,
               400
@@ -279,7 +279,7 @@ export class OrderService {
 
       const availableStock = variant ? variant.stockQuantity : product.stockQuantity;
       const displayName = variant ? `${product.name} (${variant.label})` : product.name;
-      if (!stageOptionIds?.length && availableStock < input.quantity) {
+      if (!stageSelections?.length && availableStock < input.quantity) {
         throw new AppError(`Only ${availableStock} left of "${displayName}"`, 400);
       }
 
@@ -290,7 +290,7 @@ export class OrderService {
       return {
         productId: product.id,
         variantId: variant?.id ?? null,
-        stageOptionIds,
+        stageSelections,
         categoryId: product.categoryId,
         name: displayName,
         sku: variant?.sku ?? product.sku,

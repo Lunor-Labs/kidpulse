@@ -153,12 +153,6 @@ export class ProductRepository {
     });
   }
 
-  /**
-   * Same trap as findBySkuOrSlug's deletedAt filter, from the other side: a
-   * soft-deleted product still holds its sku and slug in their unique indexes.
-   * Returns every deleted row occupying either, since the sku and the slug can
-   * be held by two different dead rows.
-   */
   async findDeletedBySkuOrSlug(sku: string, slug: string) {
     return prisma.product.findMany({
       where: { deletedAt: { not: null }, OR: [{ sku }, { slug }] },
@@ -206,7 +200,6 @@ export class ProductRepository {
         });
         await syncProductStockFromVariants(tx, product.id);
       }
-      // Sync additional categories
       const uniqueAdditional = additionalCategoryIds.filter((id) => id !== data.categoryId);
       if (uniqueAdditional.length > 0) {
         await tx.productCategory.createMany({
@@ -273,8 +266,6 @@ export class ProductRepository {
         }
       }
       await syncProductStockFromVariants(tx, id);
-
-      // Sync additional categories
       await tx.productCategory.deleteMany({ where: { productId: id } });
       const primaryCategoryId = typeof data.categoryId === 'string' ? data.categoryId : undefined;
       const uniqueAdditional = additionalCategoryIds.filter((cid) => cid !== primaryCategoryId);
@@ -331,11 +322,13 @@ export class ProductRepository {
         }
         for (let i = 0; i < stage.options.length; i++) {
           const opt = stage.options[i];
+          // ✅ Added imageUrl to payload
           const payload = {
             label: opt.label,
             selectCount: opt.selectCount ?? null,
             priceOverride: opt.priceOverride ?? null,
             stockQuantity: opt.stockQuantity ?? 0,
+            imageUrl: opt.imageUrl ?? null,
             sortOrder: opt.sortOrder ?? i,
             isActive: opt.isActive ?? true,
           };

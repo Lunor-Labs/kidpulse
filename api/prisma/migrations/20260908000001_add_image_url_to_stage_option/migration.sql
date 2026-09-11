@@ -1,0 +1,1 @@
+ALTER TABLE "variant_stage_options" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;

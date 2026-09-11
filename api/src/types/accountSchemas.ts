@@ -40,15 +40,20 @@ const shippingAddressSchema = z.object({
   country: z.string().trim().max(80).optional(),
 });
 
+export const stageSelectionSchema = z.object({
+  optionId: z.string().trim().min(1),
+  quantity: z.number().int().min(1).max(99),
+});
+
 export const cartItemSchema = z.object({
   productId: z.string().trim().min(1),
   variantId: z.string().trim().min(1).nullable().optional(),
-  stageOptionIds: z.array(z.string().trim().min(1)).nullable().optional(),
+  stageSelections: z.array(stageSelectionSchema).nullable().optional(),
   quantity: z.number().int().min(1).max(99),
 });
 
 export const couponValidateSchema = z.object({
-  code: z.string().trim().min(1).max(40),
+  code: z.string().trim().max(40),
   subtotal: z.number().nonnegative().max(10_000_000),
 });
 
@@ -69,3 +74,4 @@ export const checkoutSchema = z.object({
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 export type CheckoutShippingInput = z.infer<typeof shippingAddressSchema>;
 export type CartPreviewInput = z.infer<typeof cartPreviewSchema>;
+export type StageSelectionInput = z.infer<typeof stageSelectionSchema>;
