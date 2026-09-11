@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -103,11 +101,9 @@ export function CheckoutClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Shipping settings
   const [defaultShipping, setDefaultShipping] = useState(350);
   const [freeThreshold, setFreeThreshold] = useState(5000);
 
-  // Auto discount preview
   const [autoDiscountAmount, setAutoDiscountAmount] = useState(0);
   const [quantityDiscountAmount, setQuantityDiscountAmount] = useState(0);
   const [spendThresholdDiscountAmount, setSpendThresholdDiscountAmount] = useState(0);
@@ -127,11 +123,9 @@ export function CheckoutClient() {
   const shippingAmount = subtotalAfterDiscount >= freeThreshold ? 0 : estimatedShippingRate;
   const total = subtotalAfterDiscount + shippingAmount;
 
-  // Inline validation states
   const emailInvalid = !!shipping.email && !EMAIL_RE.test(shipping.email);
   const phoneInvalid = !!shipping.phone && !PHONE_RE.test(shipping.phone);
 
-  // Load shipping settings
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/admin/settings`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -145,7 +139,6 @@ export function CheckoutClient() {
       .catch(() => {});
   }, [token]);
 
-  // Fetch auto discount preview whenever items or coupon changes
   useEffect(() => {
     if (items.length === 0) return;
     setPreviewLoading(true);
@@ -217,7 +210,8 @@ export function CheckoutClient() {
       items: items.map((i) => ({
         productId: i.productId,
         variantId: i.variantId ?? null,
-        stageOptionIds: i.stageOptionIds ?? null,
+        // ✅ Fix: renamed from stageOptionIds to stageSelections
+        stageSelections: i.stageSelections ?? null,
         quantity: i.quantity,
       })),
       paymentMethod,
@@ -406,7 +400,6 @@ export function CheckoutClient() {
 
             {(!token || addresses.length === 0) && (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {/* Email */}
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Email
@@ -427,7 +420,6 @@ export function CheckoutClient() {
                   )}
                 </div>
 
-                {/* Full name */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Full name
@@ -440,7 +432,6 @@ export function CheckoutClient() {
                   />
                 </div>
 
-                {/* Phone */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Phone
@@ -460,7 +451,6 @@ export function CheckoutClient() {
                   )}
                 </div>
 
-                {/* Address line 1 */}
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Address line 1
@@ -473,7 +463,6 @@ export function CheckoutClient() {
                   />
                 </div>
 
-                {/* Address line 2 */}
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Address line 2 (optional)
@@ -485,7 +474,6 @@ export function CheckoutClient() {
                   />
                 </div>
 
-                {/* City */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     City
@@ -498,7 +486,6 @@ export function CheckoutClient() {
                   />
                 </div>
 
-                {/* District */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     District
@@ -511,7 +498,6 @@ export function CheckoutClient() {
                   />
                 </div>
 
-                {/* Postal code */}
                 <div>
                   <label className="mb-1 block text-[0.82rem] font-semibold text-brand-ink">
                     Postal code
@@ -589,9 +575,10 @@ export function CheckoutClient() {
         <aside className="h-fit rounded-[16px] border border-brand-line bg-white p-5">
           <h2 className="mb-4 font-chewy text-[1.3rem] text-brand-indigo">Your order</h2>
           <ul className="mb-4 space-y-2">
-            {items.map((item) => (
+            {items.map((item, idx) => (
               <li
-                key={`${item.productId}:${item.variantId ?? ''}:${(item.stageOptionIds ?? []).join(',')}`}
+                // ✅ Fix: use idx fallback since stageSelections is an array of objects
+                key={`${item.productId}:${item.variantId ?? ''}:${idx}`}
                 className="flex items-center gap-3"
               >
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/40">
@@ -693,7 +680,6 @@ export function CheckoutClient() {
                 )}
               </dd>
             </div>
-
             {shippingAmount > 0 && subtotalAfterDiscount < freeThreshold && (
               <div className="text-[0.76rem] text-brand-ink-soft">
                 Add {formatLKR(freeThreshold - subtotalAfterDiscount)} more for free shipping
