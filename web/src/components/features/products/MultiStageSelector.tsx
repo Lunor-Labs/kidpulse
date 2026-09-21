@@ -14,6 +14,8 @@ export interface StageOption {
   sortOrder: number;
 }
 
+export type VariantStageOption = StageOption;
+
 export interface VariantStage {
   id: string;
   stageOrder: number;
@@ -33,6 +35,8 @@ export interface MultiStageSelectorValue {
 interface Props {
   stages: VariantStage[];
   onAddPack: (value: MultiStageSelectorValue) => void;
+  onRemovePack?: (index: number) => void; // ✅ new
+  onStage1Select?: (option: StageOption | null) => void;
 }
 
 function CharacterPicker({
@@ -54,8 +58,7 @@ function CharacterPicker({
   function setQty(optionId: string, qty: number) {
     const opt = stage2.options.find((o) => o.id === optionId);
     if (!opt) return;
-    const maxAllowed = Math.min(opt.stockQuantity, packSize);
-    const newQty = Math.max(0, Math.min(qty, maxAllowed));
+    const newQty = Math.max(0, Math.min(qty, Math.min(opt.stockQuantity, packSize)));
     const newTotalWithout = totalSelected - (quantities[optionId] ?? 0);
     const canAdd = packSize - newTotalWithout;
     const finalQty = Math.min(newQty, canAdd);
@@ -97,7 +100,6 @@ function CharacterPicker({
                   : 'border-brand-line bg-white'
               }`}
             >
-              {/* Character image */}
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/60">
                 {opt.imageUrl ? (
                   <Image src={opt.imageUrl} alt={opt.label} fill sizes="48px" className="object-cover" />
@@ -106,15 +108,13 @@ function CharacterPicker({
                 )}
               </div>
 
-              {/* Name + stock */}
               <div className="flex-1 min-w-0">
                 <p className="truncate text-[0.84rem] font-semibold text-brand-ink">{opt.label}</p>
-                <p className="text-[0.7rem] text-brand-ink-soft">
-                  {outOfStock ? 'Out of stock' : `${opt.stockQuantity} available`}
-                </p>
+                {outOfStock && (
+                  <p className="text-[0.7rem] text-brand-berry font-semibold">Out of stock</p>
+                )}
               </div>
 
-              {/* Quantity control */}
               {!outOfStock && (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
@@ -162,7 +162,7 @@ function CharacterPicker({
   );
 }
 
-export function MultiStageSelector({ stages, onAddPack }: Props) {
+export function MultiStageSelector({ stages, onAddPack, onRemovePack, onStage1Select }: Props) {
   const stage1 = stages.find((s) => s.stageOrder === 0);
   const stage2 = stages.find((s) => s.stageOrder === 1);
 
@@ -176,8 +176,16 @@ export function MultiStageSelector({ stages, onAddPack }: Props) {
   const inStockS2Count = stage2?.options.filter((o) => o.stockQuantity > 0).length ?? 0;
 
   function handlePackSelect(optionId: string) {
+    const option = stage1?.options.find((o) => o.id === optionId) ?? null;
     setSelectedS1Id(optionId);
     setStep('characters');
+    onStage1Select?.(option);
+  }
+
+  function handleBack() {
+    setSelectedS1Id(null);
+    setStep('pack');
+    onStage1Select?.(null);
   }
 
   function handleCharactersConfirm(selections: StageSelection[]) {
@@ -197,6 +205,7 @@ export function MultiStageSelector({ stages, onAddPack }: Props) {
     onAddPack(pack);
     setSelectedS1Id(null);
     setStep('pack');
+    onStage1Select?.(null);
   }
 
   if (!stage1 || !stage2) return null;
@@ -222,7 +231,10 @@ export function MultiStageSelector({ stages, onAddPack }: Props) {
               </span>
               <button
                 type="button"
-                onClick={() => setAddedPacks((prev) => prev.filter((_, pi) => pi !== i))}
+                onClick={() => {
+                  setAddedPacks((prev) => prev.filter((_, pi) => pi !== i));
+                  onRemovePack?.(i); // ✅ tell parent to remove at same index
+                }}
                 className="ml-auto shrink-0 text-brand-ink-soft hover:text-brand-berry"
               >
                 ×
@@ -273,7 +285,7 @@ export function MultiStageSelector({ stages, onAddPack }: Props) {
           stage2={stage2}
           packSize={packSize}
           onConfirm={handleCharactersConfirm}
-          onBack={() => { setSelectedS1Id(null); setStep('pack'); }}
+          onBack={handleBack}
         />
       )}
     </div>

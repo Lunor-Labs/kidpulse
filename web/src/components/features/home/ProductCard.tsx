@@ -124,7 +124,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Product name */}
-          <h3 className="mb-[6px] min-h-[34px] text-[0.88rem] font-bold leading-[1.3] text-brand-ink line-clamp-2">
+          <h3 className="mb-[6px] min-h-[34px] font-roboto text-[0.88rem] font-bold leading-[1.3] text-brand-ink line-clamp-2">
             {product.name}
           </h3>
 

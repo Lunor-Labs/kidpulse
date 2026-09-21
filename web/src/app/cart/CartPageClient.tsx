@@ -66,7 +66,7 @@ export function CartPageClient() {
         <ul className="space-y-3">
           {items.map((item) => (
             <li
-              key={`${item.productId}:${item.variantId ?? ''}`}
+              key={item.cartKey}
               className="flex flex-wrap items-center gap-4 rounded-[14px] border border-brand-line bg-white p-3"
             >
               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[12px] bg-brand-cream/40">
@@ -99,7 +99,7 @@ export function CartPageClient() {
                 <button
                   type="button"
                   aria-label="Decrease"
-                  onClick={() => updateQuantity(item.productId, item.variantId ?? null, item.quantity - 1)}
+                  onClick={() => updateQuantity(item.cartKey, item.quantity - 1)}
                   className="h-8 w-8 rounded-full border border-brand-line font-semibold text-brand-ink hover:bg-brand-cream"
                 >
                   −
@@ -108,7 +108,7 @@ export function CartPageClient() {
                 <button
                   type="button"
                   aria-label="Increase"
-                  onClick={() => updateQuantity(item.productId, item.variantId ?? null, item.quantity + 1)}
+                  onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
                   className="h-8 w-8 rounded-full border border-brand-line font-semibold text-brand-ink hover:bg-brand-cream"
                 >
                   +
@@ -119,7 +119,7 @@ export function CartPageClient() {
               </div>
               <button
                 type="button"
-                onClick={() => removeItem(item.productId, item.variantId ?? null)}
+                onClick={() => removeItem(item.cartKey)}
                 className="rounded-full border border-brand-line px-3 py-1 text-[0.76rem] font-semibold text-brand-berry hover:bg-brand-cream"
               >
                 Remove

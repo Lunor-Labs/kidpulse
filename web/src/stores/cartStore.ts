@@ -7,6 +7,7 @@ export interface StageSelection {
 }
 
 export interface CartItem {
+  cartKey: string;
   productId: string;
   variantId: string | null;
   variantLabel: string | null;
@@ -15,6 +16,10 @@ export interface CartItem {
   price: number;
   imageUrl: string | null;
   quantity: number;
+}
+
+function generateCartKey(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function sameLine(
@@ -38,12 +43,12 @@ function sameLine(
 interface CartState {
   items: CartItem[];
   addItem: (
-    item: Omit<CartItem, 'quantity' | 'variantId' | 'variantLabel' | 'stageSelections'> &
+    item: Omit<CartItem, 'quantity' | 'cartKey' | 'variantId' | 'variantLabel' | 'stageSelections'> &
       Partial<Pick<CartItem, 'variantId' | 'variantLabel' | 'stageSelections'>>,
     quantity?: number
   ) => void;
-  removeItem: (productId: string, variantId?: string | null, stageSelections?: StageSelection[] | null) => void;
-  updateQuantity: (productId: string, variantId: string | null, quantity: number, stageSelections?: StageSelection[] | null) => void;
+  removeItem: (cartKey: string) => void;
+  updateQuantity: (cartKey: string, quantity: number) => void;
   clear: () => void;
 }
 
@@ -51,6 +56,7 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
+
       addItem: (item, quantity = 1) =>
         set((state) => {
           const variantId = item.variantId ?? null;
@@ -61,7 +67,7 @@ export const useCartStore = create<CartState>()(
           if (existing) {
             return {
               items: state.items.map((i) =>
-                sameLine(i, item.productId, variantId, stageSelections)
+                i.cartKey === existing.cartKey
                   ? { ...i, quantity: i.quantity + quantity }
                   : i
               ),
@@ -72,6 +78,7 @@ export const useCartStore = create<CartState>()(
               ...state.items,
               {
                 ...item,
+                cartKey: generateCartKey(),
                 variantId,
                 variantLabel: item.variantLabel ?? null,
                 stageSelections,
@@ -80,28 +87,41 @@ export const useCartStore = create<CartState>()(
             ],
           };
         }),
-      removeItem: (productId, variantId = null, stageSelections = null) =>
+
+      removeItem: (cartKey) =>
         set((state) => ({
-          items: state.items.filter(
-            (i) => !sameLine(i, productId, variantId ?? null, stageSelections ?? null)
-          ),
+          items: state.items.filter((i) => i.cartKey !== cartKey),
         })),
-      updateQuantity: (productId, variantId, quantity, stageSelections = null) =>
+
+      updateQuantity: (cartKey, quantity) =>
         set((state) => ({
           items:
             quantity <= 0
-              ? state.items.filter(
-                  (i) => !sameLine(i, productId, variantId, stageSelections ?? null)
-                )
+              ? state.items.filter((i) => i.cartKey !== cartKey)
               : state.items.map((i) =>
-                  sameLine(i, productId, variantId, stageSelections ?? null)
-                    ? { ...i, quantity }
-                    : i
+                  i.cartKey === cartKey ? { ...i, quantity } : i
                 ),
         })),
+
       clear: () => set({ items: [] }),
     }),
-    { name: 'kidpulse-cart' }
+    {
+      name: 'kidpulse-cart',
+      version: 2, // ✅ bump version to trigger migration
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2) {
+          // ✅ old carts have no cartKey — generate one for each item
+          return {
+            ...persistedState,
+            items: (persistedState.items ?? []).map((item: any) => ({
+              ...item,
+              cartKey: item.cartKey ?? generateCartKey(),
+            })),
+          };
+        }
+        return persistedState as CartState;
+      },
+    }
   )
 );
 

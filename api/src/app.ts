@@ -28,9 +28,12 @@ app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 
 const jsonParser = express.json({ limit: '10kb' });
+const largeJsonParser = express.json({ limit: '20mb' }); // ✅ for image uploads
 const LARGE_BODY_PATHS = new Set<string>(['/api/v1/admin/uploads/image']);
 app.use((req, res, next) => {
-  if (LARGE_BODY_PATHS.has(req.path)) return next();
+  if (LARGE_BODY_PATHS.has(req.path)) {
+    return largeJsonParser(req, res, next); // ✅ apply large parser, not skip
+  }
   return jsonParser(req, res, next);
 });
 

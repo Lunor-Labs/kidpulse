@@ -1,8 +1,4 @@
-export const NAV_LINKS = [
-  { label: 'All Products', href: '/products' },
-  { label: 'About Us', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-] as const;
+export const NAV_LINKS: { label: string; href: string }[] = [];
 
 export interface AdminNavLink {
   href: string;

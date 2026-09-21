@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Baloo_2, Fredoka, Chewy } from 'next/font/google';
+import { Baloo_2, Fredoka, Chewy, Roboto } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { AnnouncementBar } from '@/components/features/layout/AnnouncementBar';
 import { SiteHeader } from '@/components/features/layout/SiteHeader';
@@ -10,6 +10,7 @@ import './globals.css';
 const baloo = Baloo_2({ subsets: ['latin'], variable: '--font-baloo', display: 'swap' });
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-fredoka', display: 'swap' });
 const chewy = Chewy({ subsets: ['latin'], variable: '--font-chewy', weight: '400', display: 'swap' });
+const roboto = Roboto({ subsets: ['latin'], variable: '--font-roboto', weight: ['400', '500', '700'], display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${baloo.variable} ${fredoka.variable} ${chewy.variable}`}>
+    <html lang="en" className={`${baloo.variable} ${fredoka.variable} ${chewy.variable} ${roboto.variable}`}>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <AuthProvider>
           <AnnouncementBar />

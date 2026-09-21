@@ -7,7 +7,7 @@ import type { StageSelection } from '@/stores/cartStore';
 import { VariantSelector } from './VariantSelector';
 import { QuantitySelector } from './QuantitySelector';
 import { WishlistButton } from './WishlistButton';
-import { MultiStageSelector, type MultiStageSelectorValue, type VariantStage } from './MultiStageSelector';
+import { MultiStageSelector, type MultiStageSelectorValue, type VariantStage, type VariantStageOption } from './MultiStageSelector';
 import type { Product, Variant } from '@/types/catalog';
 
 function discountPercent(price: number, compareAt: number) {
@@ -33,15 +33,19 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
     variants.find((v) => v.stockQuantity > 0) ?? variants[0] ?? null
   );
-  // ✅ accumulate multiple packs instead of a single selection
   const [pendingPacks, setPendingPacks] = useState<MultiStageSelectorValue[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [selectedStage1Option, setSelectedStage1Option] = useState<VariantStageOption | null>(null);
 
   let activePrice = product.price;
   let activeCompareAt = product.compareAtPrice;
   let activeStock = product.stockQuantity;
 
-  if (!hasMultiStage && hasVariants && selectedVariant) {
+  if (hasMultiStage && selectedStage1Option) {
+    if (selectedStage1Option.priceOverride != null) {
+      activePrice = selectedStage1Option.priceOverride;
+    }
+  } else if (!hasMultiStage && hasVariants && selectedVariant) {
     activePrice = selectedVariant.price;
     activeCompareAt = selectedVariant.compareAtPrice;
     activeStock = selectedVariant.stockQuantity;
@@ -56,7 +60,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   const handleAddToCart = () => {
     if (hasMultiStage && pendingPacks.length > 0) {
-      // ✅ Add each pack as a separate cart line
       for (const pack of pendingPacks) {
         addItem(
           {
@@ -72,6 +75,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         );
       }
       setPendingPacks([]);
+      setSelectedStage1Option(null);
       toast.success(`${pendingPacks.length} pack${pendingPacks.length > 1 ? 's' : ''} added to cart!`);
     } else {
       addItem(
@@ -144,11 +148,37 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         )}
       </div>
 
+      {/* ✅ Selected pack summary — visible only when customer is on the characters step */}
+      {hasMultiStage && selectedStage1Option && (
+        <div className="mb-4 flex items-center gap-3 rounded-[12px] border border-brand-indigo/20 bg-brand-indigo/5 px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-brand-indigo/60">
+              Selected Pack
+            </p>
+            <p className="text-[0.92rem] font-bold text-brand-indigo">
+              {selectedStage1Option.label}
+              {selectedStage1Option.priceOverride != null && (
+                <span className="ml-2 text-[0.84rem] font-normal text-brand-ink-soft">
+                  · {formatPrice(selectedStage1Option.priceOverride)}
+                </span>
+              )}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-brand-indigo/10 px-2.5 py-1 text-[0.72rem] font-semibold text-brand-indigo">
+            {selectedStage1Option.selectCount ?? 1} character{(selectedStage1Option.selectCount ?? 1) > 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+
       {hasMultiStage && product.variantStages ? (
         <div className="mb-5">
           <MultiStageSelector
             stages={product.variantStages as VariantStage[]}
             onAddPack={(pack) => setPendingPacks((prev) => [...prev, pack])}
+            onRemovePack={(index) =>
+              setPendingPacks((prev) => prev.filter((_, i) => i !== index))
+            }
+            onStage1Select={(option) => setSelectedStage1Option(option)}
           />
         </div>
       ) : hasVariants ? (
@@ -183,7 +213,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               ? `🛒 Add ${pendingPacks.length} pack${pendingPacks.length > 1 ? 's' : ''} to Cart`
               : '🛒 Add to Cart'}
       </button>
-
       <WishlistButton productId={product.id} variant="bar" />
 
       <div className="mt-6 border-t border-brand-line pt-5">

@@ -580,7 +580,7 @@ export function CheckoutClient() {
             {items.map((item, idx) => (
               <li
                 // ✅ Fix: use idx fallback since stageSelections is an array of objects
-                key={`${item.productId}:${item.variantId ?? ''}:${idx}`}
+                key={item.cartKey}
                 className="flex items-center gap-3"
               >
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/40">

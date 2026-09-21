@@ -8,8 +8,14 @@ import type {
   ReviewList,
 } from '@/types/catalog';
 
+// Server-side (SSR/RSC): process.env.API_URL is available via next.config.ts env block
+// Client-side (browser): only NEXT_PUBLIC_* vars survive — next.config.ts inlines
+// NEXT_PUBLIC_API_URL from API_URL at build time so both point to the same host
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:4000';
-console.log('api.ts API_URL:', API_URL);
+
+// authRequest always runs in the browser (called from client components),
+// so it must use the NEXT_PUBLIC_ var — process.env.API_URL is undefined there
+const BROWSER_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export class ApiUnavailableError extends Error {}
 
@@ -94,9 +100,11 @@ export function getProductBanner(productId: string): Promise<ProductBanner | nul
 }
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
+// These are always called from client components (browser), so they use
+// BROWSER_API_URL which resolves to the NEXT_PUBLIC_ var at runtime
 
 async function authRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${BROWSER_API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
