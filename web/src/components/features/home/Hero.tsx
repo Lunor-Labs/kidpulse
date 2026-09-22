@@ -18,7 +18,7 @@ export function Hero() {
       />
 
       {/* ── Main two-column grid ── */}
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-5 sm:px-8 md:grid-cols-2">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-5 pb-6 sm:px-8 md:grid-cols-2">
 
         {/* LEFT — Copy */}
         <div className="py-6">
@@ -32,7 +32,7 @@ export function Hero() {
             New season kits just dropped
           </div>
 
-          {/* Headline only */}
+          {/* Headline */}
           <h1 className="font-display text-[clamp(2.3rem,4.4vw,3.6rem)] font-bold leading-[1.08] text-brand-indigo">
             Craft kits that turn{' '}
             <span className="text-brand-berry">screen<br />time</span>{' '}
@@ -41,6 +41,14 @@ export function Hero() {
             play.
           </h1>
 
+          {/* ✅ Shop Now button — left-aligned below headline */}
+          <Link
+            href="/products"
+            className="mt-6 inline-flex items-center gap-2 rounded-[14px] bg-brand-gold px-8 py-3.5 text-[1rem] font-bold text-brand-indigo transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
+            style={{ boxShadow: '0 6px 0 #e8af00' }}
+          >
+            🛍️ Shop Now
+          </Link>
         </div>
 
         {/* RIGHT — Art */}
@@ -79,21 +87,10 @@ export function Hero() {
       </div>
 
       {/* ── Carousel dots ── */}
-      <div className="relative z-10 flex justify-center gap-2 pb-4">
+      <div className="relative z-10 flex justify-center gap-2 py-3">
         <span className="h-2 w-6 rounded-full bg-brand-indigo" />
         <span className="h-2 w-2 rounded-full bg-brand-indigo/20" />
         <span className="h-2 w-2 rounded-full bg-brand-indigo/20" />
-      </div>
-
-      {/* ── Shop Now button ── */}
-      <div className="relative z-10 flex justify-center pb-8">
-        <Link
-          href="/products"
-          className="inline-flex items-center gap-2 rounded-[14px] bg-brand-gold px-10 py-4 text-[1rem] font-bold text-brand-indigo transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
-          style={{ boxShadow: '0 6px 0 #e8af00' }}
-        >
-          🛍️ Shop Now
-        </Link>
       </div>
 
     </section>

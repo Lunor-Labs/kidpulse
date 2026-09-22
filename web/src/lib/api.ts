@@ -8,9 +8,6 @@ import type {
   ReviewList,
 } from '@/types/catalog';
 
-// Server-side (SSR/RSC): process.env.API_URL is available via next.config.ts env block
-// Client-side (browser): only NEXT_PUBLIC_* vars survive — next.config.ts inlines
-// NEXT_PUBLIC_API_URL from API_URL at build time so both point to the same host
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:4000';
 
 // authRequest always runs in the browser (called from client components),
@@ -93,9 +90,14 @@ export function searchProducts(q: string, limit: number = 8): Promise<ProductSug
 }
 
 export function getProductBanner(productId: string): Promise<ProductBanner | null> {
-  return apiGet<ProductBanner | null>(
-    `/api/v1/product-banners?productId=${encodeURIComponent(productId)}`,
-    120
+  return apiGetFresh<ProductBanner | null>(
+    `/api/v1/product-banners?productId=${encodeURIComponent(productId)}`
+  );
+}
+
+export function getGlobalProductBanner(): Promise<ProductBanner | null> {
+  return apiGetFresh<ProductBanner | null>(
+    `/api/v1/product-banners?productId=global`
   );
 }
 

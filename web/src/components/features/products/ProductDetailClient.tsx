@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCartStore } from '@/stores/cartStore';
-import type { StageSelection } from '@/stores/cartStore';
 import { VariantSelector } from './VariantSelector';
 import { QuantitySelector } from './QuantitySelector';
 import { WishlistButton } from './WishlistButton';
-import { MultiStageSelector, type MultiStageSelectorValue, type VariantStage, type VariantStageOption } from './MultiStageSelector';
+import {
+  MultiStageSelector,
+  type MultiStageSelectorValue,
+  type VariantStage,
+  type VariantStageOption,
+} from './MultiStageSelector';
 import type { Product, Variant } from '@/types/catalog';
 
 function discountPercent(price: number, compareAt: number) {
@@ -16,6 +20,17 @@ function discountPercent(price: number, compareAt: number) {
 
 function formatPrice(p: number) {
   return `Rs. ${p.toLocaleString('en-LK')}`;
+}
+
+// Extract first image src from HTML string
+function extractFirstImage(html: string): string | null {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match ? match[1] : null;
+}
+
+// Remove first image tag from HTML string
+function removeFirstImage(html: string): string {
+  return html.replace(/<img[^>]+>/i, '');
 }
 
 interface ProductDetailClientProps {
@@ -57,6 +72,12 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const reviewCount = product.reviewCount ?? 0;
   const multiStageReady = !hasMultiStage || pendingPacks.length > 0;
   const canAddToCart = !isOutOfStock && multiStageReady;
+
+  // Extract first image from description for left panel
+  const firstImageSrc = extractFirstImage(product.description);
+  const descriptionWithoutFirstImage = firstImageSrc
+    ? removeFirstImage(product.description)
+    : product.description;
 
   const handleAddToCart = () => {
     if (hasMultiStage && pendingPacks.length > 0) {
@@ -148,7 +169,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         )}
       </div>
 
-      {/* ✅ Selected pack summary — visible only when customer is on the characters step */}
       {hasMultiStage && selectedStage1Option && (
         <div className="mb-4 flex items-center gap-3 rounded-[12px] border border-brand-indigo/20 bg-brand-indigo/5 px-4 py-3">
           <div className="flex-1 min-w-0">
@@ -215,19 +235,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       </button>
       <WishlistButton productId={product.id} variant="bar" />
 
-      <div className="mt-6 border-t border-brand-line pt-5">
-        <h2 className="mb-3 font-chewy text-[1.1rem] text-brand-indigo">About this kit</h2>
-        <div
-          className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:rounded-[12px] [&_img]:my-3"
-          dangerouslySetInnerHTML={{ __html: product.description }}
-        />
-      </div>
-
-      {product.ageRangeMin && product.ageRangeMax && (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-[10px] bg-brand-cream px-4 py-2 text-[0.82rem] font-semibold text-brand-indigo">
-          👶 Recommended for ages {product.ageRangeMin}–{product.ageRangeMax}
-        </div>
-      )}
+      
+      
     </div>
   );
 }
