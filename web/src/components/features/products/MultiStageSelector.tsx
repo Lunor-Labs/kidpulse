@@ -92,17 +92,16 @@ function CharacterPicker({
           return (
             <div
               key={opt.id}
-              className={`flex items-center gap-3 rounded-[12px] border p-2.5 transition-colors ${
-                qty > 0
+              className={`flex items-center gap-3 rounded-[12px] border p-2.5 transition-colors ${qty > 0
                   ? 'border-brand-sky-deep bg-brand-sky-deep/5'
                   : outOfStock
-                  ? 'border-brand-line bg-brand-cream/30 opacity-50'
-                  : 'border-brand-line bg-white'
-              }`}
+                    ? 'border-brand-line bg-brand-cream/30 opacity-50'
+                    : 'border-brand-line bg-white'
+                }`}
             >
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/60">
                 {opt.imageUrl ? (
-                  <Image src={opt.imageUrl} alt={opt.label} fill sizes="48px" className="object-cover" />
+                  <img src={opt.imageUrl} alt={opt.label} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[1.4rem]">🎨</div>
                 )}
