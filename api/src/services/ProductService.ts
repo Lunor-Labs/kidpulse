@@ -26,6 +26,7 @@ function mapStageOption(o: {
   selectCount: number | null;
   priceOverride: unknown;
   stockQuantity: number;
+  imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
 }): VariantStageOptionDto {
@@ -35,6 +36,7 @@ function mapStageOption(o: {
     selectCount: o.selectCount ?? null,
     priceOverride: o.priceOverride === null ? null : Number(o.priceOverride),
     stockQuantity: o.stockQuantity,
+    imageUrl: o.imageUrl ?? null,
     sortOrder: o.sortOrder,
     isActive: o.isActive,
   };

@@ -38,6 +38,7 @@ export interface AdminVariantStageOption {
   selectCount: number | null;
   priceOverride: number | null;
   stockQuantity: number;
+  imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
 }
@@ -106,6 +107,7 @@ export interface ProductVariantStageOptionFormValue {
   selectCount?: number | null;
   priceOverride?: number | null;
   stockQuantity: number;
+  imageUrl?: string | null;
   sortOrder?: number;
   isActive?: boolean;
 }
