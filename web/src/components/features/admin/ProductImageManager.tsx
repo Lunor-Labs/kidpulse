@@ -35,12 +35,7 @@ export function ProductImageManager({ value, onChange }: ProductImageManagerProp
         }
         const dataBase64 = await fileToBase64(file);
         const result = await adminApi.uploadImage(
-          {
-            filename: file.name,
-            contentType: file.type,
-            dataBase64,
-            folder: 'products',
-          },
+          { filename: file.name, contentType: file.type, dataBase64, folder: 'products' },
           token
         );
         uploaded.push({
@@ -79,52 +74,78 @@ export function ProductImageManager({ value, onChange }: ProductImageManagerProp
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
-          multiple
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
-          }}
-          className="text-[0.82rem]"
-          disabled={uploading}
-        />
-        {uploading && (
-          <span className="text-[0.72rem] text-brand-ink-soft">Uploading…</span>
-        )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        multiple
+        className="hidden"
+        disabled={uploading}
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
+        }}
+      />
+
+      {/* Upload button row */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          disabled={uploading || value.length >= 12}
+          onClick={() => inputRef.current?.click()}
+          className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-brand-indigo/40 bg-brand-indigo/5 px-4 py-2 text-[0.82rem] font-semibold text-brand-indigo transition-all hover:border-brand-indigo hover:bg-brand-indigo/10 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {uploading ? (
+            <>
+              <span className="animate-spin text-[0.9rem]">⏳</span>
+              Uploading…
+            </>
+          ) : (
+            <>
+              <span className="text-[1rem]">＋</span>
+              Add images
+            </>
+          )}
+        </button>
+        <span className="text-[0.74rem] text-brand-ink-soft">
+          {value.length}/12 · PNG, JPG, WEBP · Max 4MB each
+        </span>
       </div>
-      {value.length === 0 ? (
-        <p className="rounded-[10px] border border-dashed border-brand-line bg-brand-cream/30 px-4 py-3 text-[0.82rem] text-brand-ink-soft">
-          No images yet. Add up to 12 images (max 4MB each).
-        </p>
-      ) : (
+
+      {/* Image grid */}
+      {value.length > 0 && (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {value.map((img, idx) => (
             <li
               key={`${img.url}-${idx}`}
               className="flex items-center gap-3 rounded-[12px] border border-brand-line bg-white p-2"
             >
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/40">
-                <Image src={img.url} alt={img.altText ?? ''} fill sizes="64px" className="object-cover" />
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[8px] bg-brand-cream/40">
+                <Image
+                  src={img.url}
+                  alt={img.altText ?? ''}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <input
                   type="text"
-                  placeholder="Alt text"
+                  placeholder="Alt text (optional)"
                   className="w-full rounded-[8px] border border-brand-line px-2 py-1 text-[0.82rem]"
                   value={img.altText ?? ''}
                   onChange={(e) => updateAlt(idx, e.target.value)}
                 />
-                <div className="mt-1 text-[0.7rem] text-brand-ink-soft">#{idx + 1}</div>
+                <div className="mt-0.5 text-[0.68rem] text-brand-ink-soft">
+                  #{idx + 1} {idx === 0 ? '· Primary image' : ''}
+                </div>
               </div>
               <div className="flex flex-col gap-1">
                 <button
                   type="button"
                   onClick={() => move(idx, -1)}
                   disabled={idx === 0}
-                  className="rounded-full border border-brand-line px-2 py-[1px] text-[0.72rem] disabled:opacity-40"
+                  className="rounded border border-brand-line px-1.5 py-[1px] text-[0.7rem] disabled:opacity-30 hover:bg-brand-cream"
                 >
                   ↑
                 </button>
@@ -132,14 +153,14 @@ export function ProductImageManager({ value, onChange }: ProductImageManagerProp
                   type="button"
                   onClick={() => move(idx, 1)}
                   disabled={idx === value.length - 1}
-                  className="rounded-full border border-brand-line px-2 py-[1px] text-[0.72rem] disabled:opacity-40"
+                  className="rounded border border-brand-line px-1.5 py-[1px] text-[0.7rem] disabled:opacity-30 hover:bg-brand-cream"
                 >
                   ↓
                 </button>
                 <button
                   type="button"
                   onClick={() => remove(idx)}
-                  className="rounded-full border border-brand-line px-2 py-[1px] text-[0.72rem] text-brand-berry"
+                  className="rounded border border-brand-line px-1.5 py-[1px] text-[0.7rem] text-brand-berry hover:bg-brand-cream"
                 >
                   ×
                 </button>

@@ -22,6 +22,7 @@ export interface VariantStageOptionDto {
   selectCount: number | null;
   priceOverride: number | null;
   stockQuantity: number;
+  imageUrl: string | null; 
   sortOrder: number;
   isActive: boolean;
 }

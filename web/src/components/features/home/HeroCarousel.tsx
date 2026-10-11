@@ -39,7 +39,7 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
       {/* ── Main two-column grid ── */}
       <div
         key={active.id}
-        className="animate-hero-fade relative mx-auto grid max-w-7xl items-center gap-10 px-5 sm:px-8 md:grid-cols-2"
+        className="animate-hero-fade relative mx-auto grid max-w-7xl items-center gap-10 px-5 pb-6 sm:px-8 md:grid-cols-2"
       >
         {/* LEFT — Copy */}
         <div className="py-6">
@@ -64,6 +64,15 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
               {active.subheadline}
             </p>
           )}
+
+          {/* ✅ CTA button moved here — left-aligned below subheadline */}
+          <Link
+            href={active.ctaHref ?? '/products'}
+            className="mt-6 inline-flex items-center gap-2 rounded-[14px] bg-brand-gold px-8 py-3.5 text-[1rem] font-bold text-brand-indigo transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
+            style={{ boxShadow: '0 6px 0 #e8af00' }}
+          >
+            {active.ctaLabel ?? '🛍️ Shop Now'}
+          </Link>
         </div>
 
         {/* RIGHT — Art */}
@@ -89,20 +98,11 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
             className="relative z-10 h-[300px] w-auto max-w-full object-contain drop-shadow-[0_18px_30px_rgba(27,11,128,0.18)] sm:h-[420px]"
           />
 
-          {/* Floating badge — top left */}
-          <div className="animate-floaty absolute left-1 top-[8%] z-20 flex items-center gap-2 rounded-2xl bg-white px-4 py-[10px] text-[0.82rem] font-bold text-brand-indigo shadow-[0_10px_24px_rgba(27,11,128,0.14)] sm:left-[-2%]">
-            <span className="text-xl">🎨</span> New kit weekly
-          </div>
-
-          {/* Floating badge — bottom right */}
-          <div className="animate-floaty-delayed absolute bottom-[14%] right-1 z-20 flex items-center gap-2 rounded-2xl bg-white px-4 py-[10px] text-[0.82rem] font-bold text-brand-indigo shadow-[0_10px_24px_rgba(27,11,128,0.14)] sm:right-[-4%]">
-            <span className="text-xl">⭐</span> 386 5-star reviews
-          </div>
         </div>
       </div>
 
-      {/* ── Carousel dots ── */}
-      <div className="relative z-10 flex justify-center gap-2 pb-4">
+      {/* ── Carousel dots only — no extra padding ── */}
+      <div className="relative z-10 flex justify-center gap-2 py-3">
         {banners.length > 1 ? (
           banners.map((b, i) => (
             <button
@@ -110,11 +110,10 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
               type="button"
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => setIdx(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === idx
+              className={`h-2 rounded-full transition-all ${i === idx
                   ? 'w-6 bg-brand-indigo'
                   : 'w-2 bg-brand-indigo/20 hover:bg-brand-indigo/40'
-              }`}
+                }`}
             />
           ))
         ) : (
@@ -124,17 +123,6 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
             <span className="h-2 w-2 rounded-full bg-brand-indigo/20" />
           </>
         )}
-      </div>
-
-      {/* ── Shop Now / CTA button ── */}
-      <div className="relative z-10 flex justify-center pb-8">
-        <Link
-          href={active.ctaHref ?? '/products'}
-          className="inline-flex items-center gap-2 rounded-[14px] bg-brand-gold px-10 py-4 text-[1rem] font-bold text-brand-indigo transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
-          style={{ boxShadow: '0 6px 0 #e8af00' }}
-        >
-          {active.ctaLabel ?? '🛍️ Shop Now'}
-        </Link>
       </div>
 
     </section>

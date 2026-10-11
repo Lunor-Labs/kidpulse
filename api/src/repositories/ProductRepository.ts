@@ -153,6 +153,19 @@ export class ProductRepository {
     });
   }
 
+  async findDeletedBySkuOrSlug(sku: string, slug: string) {
+    return prisma.product.findMany({
+      where: { deletedAt: { not: null }, OR: [{ sku }, { slug }] },
+    });
+  }
+
+  async releaseSkuAndSlug(id: string, sku: string, slug: string) {
+    return prisma.product.update({
+      where: { id },
+      data: { sku: `${sku}__deleted__${id}`, slug: `${slug}__deleted__${id}` },
+    });
+  }
+
   async createWithImages(
     data: Prisma.ProductUncheckedCreateInput,
     images: Array<{ url: string; altText: string | null; sortOrder: number }>,
@@ -187,7 +200,6 @@ export class ProductRepository {
         });
         await syncProductStockFromVariants(tx, product.id);
       }
-      // Sync additional categories
       const uniqueAdditional = additionalCategoryIds.filter((id) => id !== data.categoryId);
       if (uniqueAdditional.length > 0) {
         await tx.productCategory.createMany({
@@ -254,8 +266,6 @@ export class ProductRepository {
         }
       }
       await syncProductStockFromVariants(tx, id);
-
-      // Sync additional categories
       await tx.productCategory.deleteMany({ where: { productId: id } });
       const primaryCategoryId = typeof data.categoryId === 'string' ? data.categoryId : undefined;
       const uniqueAdditional = additionalCategoryIds.filter((cid) => cid !== primaryCategoryId);
@@ -312,11 +322,13 @@ export class ProductRepository {
         }
         for (let i = 0; i < stage.options.length; i++) {
           const opt = stage.options[i];
+          // ✅ Added imageUrl to payload
           const payload = {
             label: opt.label,
             selectCount: opt.selectCount ?? null,
             priceOverride: opt.priceOverride ?? null,
             stockQuantity: opt.stockQuantity ?? 0,
+            imageUrl: opt.imageUrl ?? null,
             sortOrder: opt.sortOrder ?? i,
             isActive: opt.isActive ?? true,
           };

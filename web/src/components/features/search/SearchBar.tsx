@@ -3,25 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchDropdown } from './SearchDropdown';
-
-const PRODUCTS = [
-  { name: 'DIY 3D Character Painting Kit', slug: 'diy-3d-character-painting-kit', category: 'Painting Kits', categorySlug: 'painting-kits', price: 2500 },
-  { name: 'KidPulse STEM Science Kit',     slug: 'kidpulse-stem-science-kit',     category: 'STEM Kits',     categorySlug: 'stem-kits',     price: 5100 },
-  { name: 'Custom Return Gift Set',        slug: 'custom-return-gift-set',        category: 'Gift Collections', categorySlug: 'gift-collections', price: 4200 },
-  { name: 'Sea Theme Painting Kit',        slug: 'sea-theme-painting-kit',        category: 'Painting Kits', categorySlug: 'painting-kits', price: 3890 },
-  { name: 'Animal World Learning Set',     slug: 'animal-world-learning-set',     category: 'Learning Toys', categorySlug: 'learning-toys', price: 5062 },
-  { name: 'Junior Microscope Explorer Kit',slug: 'junior-microscope-kit',         category: 'STEM Kits',     categorySlug: 'stem-kits',     price: 6200 },
-  { name: 'Dinosaur Painting Kit',         slug: 'dinosaur-painting-kit',         category: 'Painting Kits', categorySlug: 'painting-kits', price: 2900 },
-  { name: 'Rainbow Slime Science Kit',     slug: 'rainbow-slime-kit',             category: 'STEM Kits',     categorySlug: 'stem-kits',     price: 3400 },
-  { name: 'Birthday Gift Box Deluxe',      slug: 'birthday-gift-box-deluxe',      category: 'Gift Collections', categorySlug: 'gift-collections', price: 7500 },
-];
-
-const CATEGORIES = [
-  { name: 'Painting Kits',    slug: 'painting-kits',    count: 3 },
-  { name: 'STEM Kits',        slug: 'stem-kits',        count: 3 },
-  { name: 'Gift Collections', slug: 'gift-collections', count: 2 },
-  { name: 'Learning Toys',    slug: 'learning-toys',    count: 1 },
-];
+import type { ProductSuggestion as ApiProductSuggestion } from '@/types/catalog';
 
 export interface ProductSuggestion {
   name: string;
@@ -29,6 +11,7 @@ export interface ProductSuggestion {
   category: string;
   categorySlug: string;
   price: number;
+  imageUrl?: string | null;
 }
 
 export interface CategorySuggestion {
@@ -42,18 +25,40 @@ export interface SearchSuggestions {
   categories: CategorySuggestion[];
 }
 
-function getSuggestions(query: string): SearchSuggestions {
-  const q = query.toLowerCase().trim();
+const API_BASE =
+  typeof window !== 'undefined'
+    ? (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000')
+    : (process.env.API_URL ?? 'http://localhost:4000');
 
-  const products = PRODUCTS.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q)
-  ).slice(0, 5);
+async function fetchSuggestions(query: string): Promise<SearchSuggestions> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/products/search?q=${encodeURIComponent(query)}&limit=5`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) return { products: [], categories: [] };
 
-  const categories = CATEGORIES.filter((c) =>
-    c.name.toLowerCase().includes(q)
-  ).slice(0, 3);
+  const json = await res.json();
+  const raw: ApiProductSuggestion[] = json.data ?? [];
+
+  // Map API shape → local shape
+  const products: ProductSuggestion[] = raw.map((p) => ({
+    name: p.name,
+    slug: p.slug,
+    category: p.categoryName,
+    categorySlug: p.categoryName.toLowerCase().replace(/\s+/g, '-'),
+    price: p.price,
+    imageUrl: p.imageUrl,
+  }));
+
+  // Derive unique categories from the product results
+  const catMap = new Map<string, CategorySuggestion>();
+  for (const p of products) {
+    if (!catMap.has(p.categorySlug)) {
+      catMap.set(p.categorySlug, { name: p.category, slug: p.categorySlug, count: 0 });
+    }
+    catMap.get(p.categorySlug)!.count += 1;
+  }
+  const categories = [...catMap.values()].slice(0, 3);
 
   return { products, categories };
 }
@@ -88,20 +93,27 @@ export function SearchBar() {
     ...suggestions.products.map((p)   => ({ type: 'product'  as const, ...p })),
   ];
 
-  /* ── Update suggestions when query changes ── */
+  // Debounced API fetch — fires 250ms after the user stops typing
   useEffect(() => {
-    if (query.length >= 3) {
-      const results = getSuggestions(query);
-      setSuggestions(results);
-      setOpen(results.products.length > 0 || results.categories.length > 0);
-    } else {
+    if (query.length < 3) {
       setSuggestions({ products: [], categories: [] });
       setOpen(false);
+      setActiveIndex(-1);
+      return;
     }
-    setActiveIndex(-1);
+
+    const timer = setTimeout(() => {
+      fetchSuggestions(query).then((results) => {
+        setSuggestions(results);
+        setOpen(results.products.length > 0 || results.categories.length > 0);
+        setActiveIndex(-1);
+      });
+    }, 250);
+
+    return () => clearTimeout(timer);
   }, [query]);
 
-  /* ── Close on outside click ── */
+  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
@@ -112,12 +124,11 @@ export function SearchBar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  /* ── Navigate to search results ── */
   const navigateToResults = useCallback((q: string) => {
     if (!q.trim()) return;
     setOpen(false);
     setQuery('');
-    router.push(`/products?q=${encodeURIComponent(q.trim())}`);
+    router.push(`/search?q=${encodeURIComponent(q.trim())}`);
   }, [router]);
 
   const navigateToProduct = useCallback((slug: string) => {
@@ -132,7 +143,6 @@ export function SearchBar() {
     router.push(`/products?category=${slug}`);
   }, [router]);
 
-  /* ── Keyboard navigation ── */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open) {
       if (e.key === 'Enter') navigateToResults(query);
@@ -152,8 +162,8 @@ export function SearchBar() {
         e.preventDefault();
         if (activeIndex >= 0 && allSuggestions[activeIndex]) {
           const s = allSuggestions[activeIndex];
-          if (s.type === 'product')   navigateToProduct(s.slug);
-          if (s.type === 'category')  navigateToCategory(s.slug);
+          if (s.type === 'product')  navigateToProduct(s.slug);
+          if (s.type === 'category') navigateToCategory(s.slug);
         } else {
           navigateToResults(query);
         }
@@ -182,7 +192,6 @@ export function SearchBar() {
         className="w-full rounded-full border-none bg-white py-[11px] pl-[42px] pr-[18px] font-sans text-[0.92rem] text-brand-ink placeholder:text-brand-ink-soft focus:outline-none focus:ring-2 focus:ring-brand-sky/30"
       />
 
-      {/* Dropdown */}
       {open && (
         <SearchDropdown
           query={query}

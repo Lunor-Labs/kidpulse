@@ -45,7 +45,6 @@ export class OrderController {
     try {
       const body = res.locals.body as CartPreviewInput;
 
-      // Fetch products to get categoryIds
       const products = await prisma.product.findMany({
         where: {
           id: { in: body.items.map((i) => i.productId) },
@@ -100,6 +99,56 @@ export class OrderController {
             : null,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  list = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+      const orders = await prisma.order.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: { id: true, name: true, slug: true },
+              },
+            },
+          },
+        },
+      });
+      res.json({ data: orders });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getByNumber = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+      const { orderNumber } = req.params;
+      const order = await prisma.order.findFirst({
+        where: { orderNumber, userId },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: { id: true, name: true, slug: true },
+              },
+            },
+          },
+          address: true,
+          statusEvents: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' });
+        return;
+      }
+      res.json({ data: order });
     } catch (error) {
       next(error);
     }

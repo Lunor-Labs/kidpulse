@@ -10,6 +10,7 @@ import { adminRouter } from './routes/admin';
 import { bannerRouter } from './routes/banners';
 import { categoryRouter } from './routes/categories';
 import { checkoutRouter } from './routes/checkout';
+import { momentsRouter } from './routes/moments';
 import { paymentsRouter } from './routes/payments';
 import { productBannerRouter } from './routes/productBanners';
 import { productRouter } from './routes/products';
@@ -27,9 +28,12 @@ app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 
 const jsonParser = express.json({ limit: '10kb' });
+const largeJsonParser = express.json({ limit: '20mb' }); // ✅ for image uploads
 const LARGE_BODY_PATHS = new Set<string>(['/api/v1/admin/uploads/image']);
 app.use((req, res, next) => {
-  if (LARGE_BODY_PATHS.has(req.path)) return next();
+  if (LARGE_BODY_PATHS.has(req.path)) {
+    return largeJsonParser(req, res, next); // ✅ apply large parser, not skip
+  }
   return jsonParser(req, res, next);
 });
 
@@ -52,6 +56,21 @@ const adminLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Image traffic does not fan out one request per visitor: on Vercel the Next
+// image optimizer fetches every remote image server-side, so the whole site's
+// images arrive from a handful of egress IPs and share a single rate-limit
+// bucket. Under the general 300/15min budget that is spent within minutes and
+// every later image gets a 429 — which a browser renders as a blank product
+// image rather than an error, so it reads as "the upload did not work".
+// Mounted ahead of the general limiter with a budget sized for that fan-in.
+const mediaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/media', mediaLimiter, mediaRouter);
+
 app.use(generalLimiter);
 
 // `/me` is hit on every page load by the web AuthProvider, so it stays on the
@@ -66,6 +85,7 @@ app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/banners', bannerRouter);
 app.use('/api/v1/product-banners', productBannerRouter);
+app.use('/api/v1/moments', momentsRouter);
 app.use('/api/v1/checkout', strictLimiter, checkoutRouter);
 app.use('/api/v1/payments', strictLimiter, paymentsRouter);
 app.use('/api/v1/account', accountRouter);
@@ -74,6 +94,5 @@ app.use('/api/v1/admin', adminLimiter, adminRouter);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
-app.use('/media', mediaRouter);
 
 app.use(errorHandler);

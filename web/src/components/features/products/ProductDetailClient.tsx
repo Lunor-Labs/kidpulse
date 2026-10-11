@@ -6,7 +6,12 @@ import { useCartStore } from '@/stores/cartStore';
 import { VariantSelector } from './VariantSelector';
 import { QuantitySelector } from './QuantitySelector';
 import { WishlistButton } from './WishlistButton';
-import { MultiStageSelector, type MultiStageSelectorValue, type VariantStage } from './MultiStageSelector';
+import {
+  MultiStageSelector,
+  type MultiStageSelectorValue,
+  type VariantStage,
+  type VariantStageOption,
+} from './MultiStageSelector';
 import type { Product, Variant } from '@/types/catalog';
 
 function discountPercent(price: number, compareAt: number) {
@@ -15,6 +20,17 @@ function discountPercent(price: number, compareAt: number) {
 
 function formatPrice(p: number) {
   return `Rs. ${p.toLocaleString('en-LK')}`;
+}
+
+// Extract first image src from HTML string
+function extractFirstImage(html: string): string | null {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match ? match[1] : null;
+}
+
+// Remove first image tag from HTML string
+function removeFirstImage(html: string): string {
+  return html.replace(/<img[^>]+>/i, '');
 }
 
 interface ProductDetailClientProps {
@@ -32,29 +48,19 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
     variants.find((v) => v.stockQuantity > 0) ?? variants[0] ?? null
   );
-  const [multiStageValue, setMultiStageValue] = useState<MultiStageSelectorValue | null>(null);
+  const [pendingPacks, setPendingPacks] = useState<MultiStageSelectorValue[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [selectedStage1Option, setSelectedStage1Option] = useState<VariantStageOption | null>(null);
 
   let activePrice = product.price;
   let activeCompareAt = product.compareAtPrice;
   let activeStock = product.stockQuantity;
 
-  if (hasMultiStage) {
-    if (multiStageValue?.priceOverride != null) {
-      activePrice = multiStageValue.priceOverride;
+  if (hasMultiStage && selectedStage1Option) {
+    if (selectedStage1Option.priceOverride != null) {
+      activePrice = selectedStage1Option.priceOverride;
     }
-    if (multiStageValue && product.variantStages) {
-      const stage2 = product.variantStages.find((s) => s.stageOrder === 1);
-      if (stage2) {
-        const selectedOptions = stage2.options.filter((o) =>
-          multiStageValue.stage2OptionIds.includes(o.id)
-        );
-        if (selectedOptions.length > 0) {
-          activeStock = Math.min(...selectedOptions.map((o) => o.stockQuantity));
-        }
-      }
-    }
-  } else if (hasVariants && selectedVariant) {
+  } else if (!hasMultiStage && hasVariants && selectedVariant) {
     activePrice = selectedVariant.price;
     activeCompareAt = selectedVariant.compareAtPrice;
     activeStock = selectedVariant.stockQuantity;
@@ -64,40 +70,50 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const pct = activeCompareAt ? discountPercent(activePrice, activeCompareAt) : null;
   const rating = product.avgRating ?? 0;
   const reviewCount = product.reviewCount ?? 0;
-  const multiStageReady = !hasMultiStage || multiStageValue !== null;
+  const multiStageReady = !hasMultiStage || pendingPacks.length > 0;
   const canAddToCart = !isOutOfStock && multiStageReady;
 
+  // Extract first image from description for left panel
+  const firstImageSrc = extractFirstImage(product.description);
+  const descriptionWithoutFirstImage = firstImageSrc
+    ? removeFirstImage(product.description)
+    : product.description;
+
   const handleAddToCart = () => {
-    if (hasMultiStage && multiStageValue) {
-      addItem(
-        {
-          productId: product.id,
-          variantId: null,
-          variantLabel: multiStageValue.displayLabel,
-          stageOptionIds: multiStageValue.stage2OptionIds,
-          name: product.name,
-          price: activePrice,
-          imageUrl: product.images[0]?.url ?? null,
-        },
-        quantity
-      );
+    if (hasMultiStage && pendingPacks.length > 0) {
+      for (const pack of pendingPacks) {
+        addItem(
+          {
+            productId: product.id,
+            variantId: null,
+            variantLabel: pack.displayLabel,
+            stageSelections: pack.stageSelections,
+            name: product.name,
+            price: pack.priceOverride ?? product.price,
+            imageUrl: product.images[0]?.url ?? null,
+          },
+          1
+        );
+      }
+      setPendingPacks([]);
+      setSelectedStage1Option(null);
+      toast.success(`${pendingPacks.length} pack${pendingPacks.length > 1 ? 's' : ''} added to cart!`);
     } else {
       addItem(
         {
           productId: product.id,
           variantId: selectedVariant?.id ?? null,
           variantLabel: selectedVariant?.label ?? null,
-          stageOptionIds: null,
+          stageSelections: null,
           name: product.name,
           price: activePrice,
           imageUrl: selectedVariant?.imageUrl ?? product.images[0]?.url ?? null,
         },
         quantity
       );
+      toast.success(`${product.name} added to cart!`);
     }
-    toast.success(`${product.name} added to cart!`);
     setQuantity(1);
-    if (hasMultiStage) setMultiStageValue(null);
   };
 
   return (
@@ -153,11 +169,36 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         )}
       </div>
 
+      {hasMultiStage && selectedStage1Option && (
+        <div className="mb-4 flex items-center gap-3 rounded-[12px] border border-brand-indigo/20 bg-brand-indigo/5 px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-brand-indigo/60">
+              Selected Pack
+            </p>
+            <p className="text-[0.92rem] font-bold text-brand-indigo">
+              {selectedStage1Option.label}
+              {selectedStage1Option.priceOverride != null && (
+                <span className="ml-2 text-[0.84rem] font-normal text-brand-ink-soft">
+                  · {formatPrice(selectedStage1Option.priceOverride)}
+                </span>
+              )}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-brand-indigo/10 px-2.5 py-1 text-[0.72rem] font-semibold text-brand-indigo">
+            {selectedStage1Option.selectCount ?? 1} character{(selectedStage1Option.selectCount ?? 1) > 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+
       {hasMultiStage && product.variantStages ? (
         <div className="mb-5">
           <MultiStageSelector
             stages={product.variantStages as VariantStage[]}
-            onChange={setMultiStageValue}
+            onAddPack={(pack) => setPendingPacks((prev) => [...prev, pack])}
+            onRemovePack={(index) =>
+              setPendingPacks((prev) => prev.filter((_, i) => i !== index))
+            }
+            onStage1Select={(option) => setSelectedStage1Option(option)}
           />
         </div>
       ) : hasVariants ? (
@@ -171,7 +212,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         />
       ) : null}
 
-      {!isOutOfStock && (
+      {!isOutOfStock && !hasMultiStage && (
         <QuantitySelector
           quantity={quantity}
           maxQuantity={Math.min(activeStock, 10)}
@@ -186,28 +227,16 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       >
         {isOutOfStock
           ? '✕ Out of Stock'
-          : hasMultiStage && !multiStageValue
-            ? 'Select your characters to continue'
-            : '🛒 Add to Cart'}
+          : hasMultiStage && pendingPacks.length === 0
+            ? 'Select your pack to continue'
+            : hasMultiStage
+              ? `🛒 Add ${pendingPacks.length} pack${pendingPacks.length > 1 ? 's' : ''} to Cart`
+              : '🛒 Add to Cart'}
       </button>
-
       <WishlistButton productId={product.id} variant="bar" />
 
-      <div className="mt-6 border-t border-brand-line pt-5">
-        <h2 className="mb-3 font-chewy text-[1.1rem] text-brand-indigo">About this kit</h2>
-        {/* ✅ Fix: dangerouslySetInnerHTML to render TipTap HTML. Prose plugin not
-            installed so element styles are applied via Tailwind arbitrary selectors. */}
-        <div
-          className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:rounded-[12px] [&_img]:my-3"
-          dangerouslySetInnerHTML={{ __html: product.description }}
-        />
-      </div>
-
-      {product.ageRangeMin && product.ageRangeMax && (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-[10px] bg-brand-cream px-4 py-2 text-[0.82rem] font-semibold text-brand-indigo">
-          👶 Recommended for ages {product.ageRangeMin}–{product.ageRangeMax}
-        </div>
-      )}
+      
+      
     </div>
   );
 }

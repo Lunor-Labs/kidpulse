@@ -11,10 +11,10 @@ const MAX_PRICE = 15000;
 
 
 const SORT_OPTIONS = [
-  { value: 'featured',    label: 'Featured' },
-  { value: 'price-asc',  label: 'Price: Low to High' },
+  { value: 'featured', label: 'Featured' },
+  { value: 'price-asc', label: 'Price: Low to High' },
   { value: 'price-desc', label: 'Price: High to Low' },
-  { value: 'newest',     label: 'Newest first' },
+  { value: 'newest', label: 'Newest first' },
 ];
 
 interface ProductsClientProps {
@@ -43,12 +43,12 @@ export function ProductsClient({
   const [isPending, startTransition] = useTransition();
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
-  const [maxPrice,           setMaxPrice]           = useState<number>(initialMaxPrice);
-  const [selectedMinAge,     setSelectedMinAge]     = useState<number | null>(initialMinAge);
-  const [selectedMaxAge,     setSelectedMaxAge]     = useState<number | null>(initialMaxAge);
-  const [sort,               setSort]               = useState<string>(initialSort);
-  const [query,              setQuery]              = useState<string>(initialQuery);
-  const [filtersOpen,        setFiltersOpen]        = useState(false);
+  const [maxPrice, setMaxPrice] = useState<number>(initialMaxPrice);
+  const [selectedMinAge, setSelectedMinAge] = useState<number | null>(initialMinAge);
+  const [selectedMaxAge, setSelectedMaxAge] = useState<number | null>(initialMaxAge);
+  const [sort, setSort] = useState<string>(initialSort);
+  const [query, setQuery] = useState<string>(initialQuery);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (!filtersOpen) return;
@@ -71,10 +71,10 @@ export function ProductsClient({
       const p = new URLSearchParams();
       cats.forEach((c) => p.append('category', c));
       if (price < MAX_PRICE) p.set('maxPrice', String(price));
-      if (minAge !== null)   p.set('minAge',   String(minAge));
-      if (maxAge !== null)   p.set('maxAge',   String(maxAge));
-      if (s !== 'featured')  p.set('sort',     s);
-      if (q.trim())          p.set('q',        q.trim());
+      if (minAge !== null) p.set('minAge', String(minAge));
+      if (maxAge !== null) p.set('maxAge', String(maxAge));
+      if (s !== 'featured') p.set('sort', s);
+      if (q.trim()) p.set('q', q.trim());
       const qs = p.toString();
       startTransition(() => {
         router.push(pathname + (qs ? `?${qs}` : ''), { scroll: false });
@@ -128,16 +128,7 @@ export function ProductsClient({
 
   return (
     <div className="mx-auto max-w-7xl px-8 py-10 max-[980px]:px-4">
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-chewy text-[2rem] text-brand-indigo">
-            {query ? `Results for "${query}"` : 'All Products'}
-          </h1>
-          <p className="text-[0.88rem] text-brand-ink-soft">
-            {products.length} product{products.length !== 1 ? 's' : ''} found
-            {isPending && <span className="ml-2 text-brand-sky-deep">· Updating…</span>}
-          </p>
-        </div>
+      <div className="mb-6 flex items-center gap-3">
         <select
           value={sort}
           onChange={(e) => handleSort(e.target.value)}
@@ -149,6 +140,7 @@ export function ProductsClient({
             </option>
           ))}
         </select>
+        {isPending && <span className="text-[0.82rem] text-brand-sky-deep">Updating…</span>}
       </div>
 
       <ActiveFilters

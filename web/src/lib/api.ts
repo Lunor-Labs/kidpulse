@@ -9,7 +9,8 @@ import type {
 } from '@/types/catalog';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:4000';
-console.log('api.ts API_URL:', API_URL);
+
+const BROWSER_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export class ApiUnavailableError extends Error {}
 
@@ -50,34 +51,35 @@ function buildProductListQuery(filters: ProductListFilters): string {
   return qs ? `?${qs}` : '';
 }
 
+// ✅ all content fetches use no-store so admin changes appear immediately
 export function getCategories(): Promise<Category[]> {
-  return apiGet<Category[]>('/api/v1/categories');
+  return apiGetFresh<Category[]>('/api/v1/categories');
 }
 
 export function getHomeBanners(): Promise<HomeBanner[]> {
-  return apiGet<HomeBanner[]>('/api/v1/banners');
+  return apiGetFresh<HomeBanner[]>('/api/v1/banners');
 }
 
 export function getBestSellers(): Promise<Product[]> {
-  return apiGet<Product[]>('/api/v1/products?bestseller=true&limit=8');
+  return apiGetFresh<Product[]>('/api/v1/products?bestseller=true&limit=8');
 }
 
 export function getProducts(filters: ProductListFilters = {}): Promise<Product[]> {
-  return apiGet<Product[]>(`/api/v1/products${buildProductListQuery(filters)}`);
+  return apiGetFresh<Product[]>(`/api/v1/products${buildProductListQuery(filters)}`);
 }
 
 export function getProductBySlug(slug: string): Promise<Product> {
-  return apiGet<Product>(`/api/v1/products/${encodeURIComponent(slug)}`);
+  return apiGetFresh<Product>(`/api/v1/products/${encodeURIComponent(slug)}`);
 }
 
 export function getRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {
-  return apiGet<Product[]>(
+  return apiGetFresh<Product[]>(
     `/api/v1/products?category=${encodeURIComponent(categorySlug)}&exclude=${encodeURIComponent(excludeSlug)}&limit=4`
   );
 }
 
 export function getProductReviews(slug: string): Promise<ReviewList> {
-  return apiGet<ReviewList>(`/api/v1/products/${encodeURIComponent(slug)}/reviews`, 30);
+  return apiGetFresh<ReviewList>(`/api/v1/products/${encodeURIComponent(slug)}/reviews`);
 }
 
 export function searchProducts(q: string, limit: number = 8): Promise<ProductSuggestion[]> {
@@ -87,16 +89,21 @@ export function searchProducts(q: string, limit: number = 8): Promise<ProductSug
 }
 
 export function getProductBanner(productId: string): Promise<ProductBanner | null> {
-  return apiGet<ProductBanner | null>(
-    `/api/v1/product-banners?productId=${encodeURIComponent(productId)}`,
-    120
+  return apiGetFresh<ProductBanner | null>(
+    `/api/v1/product-banners?productId=${encodeURIComponent(productId)}`
+  );
+}
+
+export function getGlobalProductBanner(): Promise<ProductBanner | null> {
+  return apiGetFresh<ProductBanner | null>(
+    `/api/v1/product-banners?productId=global`
   );
 }
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 
 async function authRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${BROWSER_API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

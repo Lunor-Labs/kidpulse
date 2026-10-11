@@ -98,10 +98,10 @@ export async function CategoryCards() {
               style={{ background: config.gradient }}
             >
               {/* Background image — scales up smoothly on hover */}
-              {config.image && (
+              {(c.imageUrl || config.image) && (
                 <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-110">
                   <Image
-                    src={config.image}
+                    src={c.imageUrl ?? config.image}
                     alt={c.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"

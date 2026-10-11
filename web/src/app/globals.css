@@ -18,9 +18,10 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-fredoka), sans-serif;
+  --font-sans: var(--font-baloo), cursive;
   --font-display: var(--font-baloo), cursive;
-  --font-chewy: var(--font-chewy), cursive;
+  --font-chewy: var(--font-baloo), cursive;
+  --font-roboto: var(--font-roboto), sans-serif;
 }
 
 body {

@@ -1,39 +1,54 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface StageSelection {
+  optionId: string;
+  quantity: number;
+}
+
 export interface CartItem {
+  cartKey: string;
   productId: string;
   variantId: string | null;
   variantLabel: string | null;
-  stageOptionIds: string[] | null; // Stage-2 option ids for multi-stage items
+  stageSelections: StageSelection[] | null;
   name: string;
   price: number;
   imageUrl: string | null;
   quantity: number;
 }
 
-function sameLine(item: CartItem, productId: string, variantId: string | null, stageOptionIds: string[] | null) {
+function generateCartKey(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function sameLine(
+  item: CartItem,
+  productId: string,
+  variantId: string | null,
+  stageSelections: StageSelection[] | null
+) {
   if (item.productId !== productId) return false;
   if ((item.variantId ?? null) !== (variantId ?? null)) return false;
-  // For multi-stage items, treat same selection as same line
-  if (stageOptionIds && item.stageOptionIds) {
-    return (
-      stageOptionIds.length === item.stageOptionIds.length &&
-      stageOptionIds.every((id) => item.stageOptionIds!.includes(id))
-    );
+  if (stageSelections && item.stageSelections) {
+    if (stageSelections.length !== item.stageSelections.length) return false;
+    return stageSelections.every((sel) => {
+      const match = item.stageSelections!.find((s) => s.optionId === sel.optionId);
+      return match && match.quantity === sel.quantity;
+    });
   }
-  return !stageOptionIds && !item.stageOptionIds;
+  return !stageSelections && !item.stageSelections;
 }
 
 interface CartState {
   items: CartItem[];
   addItem: (
-    item: Omit<CartItem, 'quantity' | 'variantId' | 'variantLabel' | 'stageOptionIds'> &
-      Partial<Pick<CartItem, 'variantId' | 'variantLabel' | 'stageOptionIds'>>,
+    item: Omit<CartItem, 'quantity' | 'cartKey' | 'variantId' | 'variantLabel' | 'stageSelections'> &
+      Partial<Pick<CartItem, 'variantId' | 'variantLabel' | 'stageSelections'>>,
     quantity?: number
   ) => void;
-  removeItem: (productId: string, variantId?: string | null, stageOptionIds?: string[] | null) => void;
-  updateQuantity: (productId: string, variantId: string | null, quantity: number, stageOptionIds?: string[] | null) => void;
+  removeItem: (cartKey: string) => void;
+  updateQuantity: (cartKey: string, quantity: number) => void;
   clear: () => void;
 }
 
@@ -41,17 +56,18 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
+
       addItem: (item, quantity = 1) =>
         set((state) => {
           const variantId = item.variantId ?? null;
-          const stageOptionIds = item.stageOptionIds ?? null;
+          const stageSelections = item.stageSelections ?? null;
           const existing = state.items.find((i) =>
-            sameLine(i, item.productId, variantId, stageOptionIds)
+            sameLine(i, item.productId, variantId, stageSelections)
           );
           if (existing) {
             return {
               items: state.items.map((i) =>
-                sameLine(i, item.productId, variantId, stageOptionIds)
+                i.cartKey === existing.cartKey
                   ? { ...i, quantity: i.quantity + quantity }
                   : i
               ),
@@ -62,36 +78,50 @@ export const useCartStore = create<CartState>()(
               ...state.items,
               {
                 ...item,
+                cartKey: generateCartKey(),
                 variantId,
                 variantLabel: item.variantLabel ?? null,
-                stageOptionIds,
+                stageSelections,
                 quantity,
               },
             ],
           };
         }),
-      removeItem: (productId, variantId = null, stageOptionIds = null) =>
+
+      removeItem: (cartKey) =>
         set((state) => ({
-          items: state.items.filter(
-            (i) => !sameLine(i, productId, variantId ?? null, stageOptionIds ?? null)
-          ),
+          items: state.items.filter((i) => i.cartKey !== cartKey),
         })),
-      updateQuantity: (productId, variantId, quantity, stageOptionIds = null) =>
+
+      updateQuantity: (cartKey, quantity) =>
         set((state) => ({
           items:
             quantity <= 0
-              ? state.items.filter(
-                  (i) => !sameLine(i, productId, variantId, stageOptionIds ?? null)
-                )
+              ? state.items.filter((i) => i.cartKey !== cartKey)
               : state.items.map((i) =>
-                  sameLine(i, productId, variantId, stageOptionIds ?? null)
-                    ? { ...i, quantity }
-                    : i
+                  i.cartKey === cartKey ? { ...i, quantity } : i
                 ),
         })),
+
       clear: () => set({ items: [] }),
     }),
-    { name: 'kidpulse-cart' }
+    {
+      name: 'kidpulse-cart',
+      version: 2, // ✅ bump version to trigger migration
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2) {
+          // ✅ old carts have no cartKey — generate one for each item
+          return {
+            ...persistedState,
+            items: (persistedState.items ?? []).map((item: any) => ({
+              ...item,
+              cartKey: item.cartKey ?? generateCartKey(),
+            })),
+          };
+        }
+        return persistedState as CartState;
+      },
+    }
   )
 );
 

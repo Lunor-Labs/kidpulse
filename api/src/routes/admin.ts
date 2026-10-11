@@ -4,6 +4,7 @@ import { adminActionLog } from '../middleware/adminActionLog';
 import { validateBody } from '../middleware/validate';
 import { AdminActionLogController } from '../controllers/AdminActionLogController';
 import { AdminAnalyticsController } from '../controllers/AdminAnalyticsController';
+import { MomentsGalleryController } from '../controllers/MomentsGalleryController';
 import { AdminCategoryController } from '../controllers/AdminCategoryController';
 import { AdminCouponController } from '../controllers/AdminCouponController';
 import { AdminCustomerController } from '../controllers/AdminCustomerController';
@@ -22,6 +23,7 @@ import {
   categoryUpsertSchema,
   couponUpsertSchema,
   imageUploadSchema,
+  momentsGalleryItemSchema,
   orderShippingUpdateSchema,
   orderStatusUpdateSchema,
   productBannerUpsertSchema,
@@ -39,6 +41,7 @@ const categories = new AdminCategoryController();
 const products = new AdminProductController();
 const banners = new HomeBannerController();
 const productBanners = new ProductBannerController();
+const moments = new MomentsGalleryController();
 const settings = new AdminSettingsController();
 const orders = new AdminOrderController();
 const coupons = new AdminCouponController();
@@ -77,6 +80,12 @@ adminRouter.put(
   productBanners.update
 );
 adminRouter.delete('/product-banners/:id', productBanners.remove);
+
+adminRouter.get('/moments', moments.listAdmin);
+adminRouter.get('/moments/:id', moments.getAdmin);
+adminRouter.post('/moments', validateBody(momentsGalleryItemSchema), moments.create);
+adminRouter.put('/moments/:id', validateBody(momentsGalleryItemSchema), moments.update);
+adminRouter.delete('/moments/:id', moments.remove);
 
 adminRouter.get('/products', products.list);
 adminRouter.get('/products/:id', products.get);

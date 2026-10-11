@@ -31,8 +31,9 @@ reads `web/.env`, falling back to the root `.env`.
 | `S3_*` | api | S3-compatible storage (endpoint, region, bucket, keys, public URL) |
 | `API_URL` | web | API origin. Inlined into the **client bundle** via `next.config.ts`, so it must be publicly reachable — not an internal hostname |
 | `SITE_URL` | web | Public site origin; backs `metadataBase`, sitemap, robots and product JSON-LD |
+| `IMAGE_HOSTS` | web | Optional, comma-separated. Extra hosts allowed to serve `next/image` sources. `API_URL` is always allowed |
 
-Two things that have bitten us:
+Three things that have bitten us:
 
 - **A declared-but-blank variable is not the same as an unset one.** `FOO=` reaches the app
   as `''`, which slips past `??` and zod's `.default()`. Both `API_URL` and `ALLOWED_ORIGINS`
@@ -40,6 +41,15 @@ Two things that have bitten us:
   `Invalid URL`.
 - **`API_URL` and `SITE_URL` are inlined at build time**, so changing them requires a redeploy,
   not just a restart.
+- **Moving the API or storage host blanks every product image until the web app is
+  rebuilt.** Image URLs are stored in the database as absolute URLs built from the API's
+  `S3_PUBLIC_URL`, and `next/image` refuses any host missing from `images.remotePatterns`: the
+  optimizer answers 400 and each image renders blank while uploads keep succeeding, so it
+  reads as an upload bug. `web/next.config.ts` derives that allowlist from `API_URL` plus
+  `IMAGE_HOSTS` rather than hardcoding hostnames. Keep `S3_PUBLIC_URL` pointed at
+  `<API_URL>/media` (the proxy in `api/src/routes/media.ts`) so image URLs stay under a host
+  the web build already knows about. Rows written before a move keep their old host, so
+  that host has to stay reachable and be listed in `IMAGE_HOSTS` for those images to load.
 
 ## Creating an admin user
 

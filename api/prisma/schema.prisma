@@ -467,6 +467,7 @@ model VariantStageOption {
   selectCount   Int?
   priceOverride Decimal?     @db.Decimal(10, 2)
   stockQuantity Int          @default(0)
+  imageUrl      String?
   sortOrder     Int          @default(0)
   isActive      Boolean      @default(true)
   createdAt     DateTime     @default(now())
@@ -488,4 +489,17 @@ model ProductCategory {
   @@index([productId])
   @@index([categoryId])
   @@map("product_categories")
+}
+
+model MomentsGalleryItem {
+  id        String    @id @default(cuid())
+  imageUrl  String
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive, deletedAt, sortOrder])
+  @@map("moments_gallery_items")
 }

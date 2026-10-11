@@ -36,8 +36,7 @@ export function RichTextEditor({ value, onChange }: Props) {
     },
     editorProps: {
       attributes: {
-        class:
-          'prose prose-sm max-w-none min-h-[180px] px-3 py-2 text-brand-ink focus:outline-none',
+        class: 'min-h-[180px] px-3 py-2 text-brand-ink focus:outline-none',
       },
     },
   });
@@ -165,8 +164,29 @@ export function RichTextEditor({ value, onChange }: Props) {
         </button>
       </div>
 
-      {/* Editor content */}
-      <EditorContent editor={editor} />
+      {/* Editor content — explicit styles since @tailwindcss/typography is not installed */}
+      <style>{`
+        .kidpulse-editor h1 { font-size: 1.6rem; font-weight: 700; color: #1a1a6e; margin-bottom: 0.5rem; }
+        .kidpulse-editor h2 { font-size: 1.3rem; font-weight: 700; color: #1a1a6e; margin-bottom: 0.4rem; }
+        .kidpulse-editor h3 { font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 0.3rem; }
+        .kidpulse-editor p { margin-bottom: 0.5rem; }
+        .kidpulse-editor ul { list-style-type: disc; padding-left: 1.4rem; margin-bottom: 0.5rem; }
+        .kidpulse-editor ol { list-style-type: decimal; padding-left: 1.4rem; margin-bottom: 0.5rem; }
+        .kidpulse-editor li { margin-bottom: 0.2rem; }
+        .kidpulse-editor strong { font-weight: 700; }
+        .kidpulse-editor em { font-style: italic; }
+        .kidpulse-editor img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+        .kidpulse-editor .is-editor-empty:first-child::before {
+          content: attr(data-placeholder);
+          float: left;
+          color: #aaa;
+          pointer-events: none;
+          height: 0;
+        }
+      `}</style>
+      <div className="kidpulse-editor">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }

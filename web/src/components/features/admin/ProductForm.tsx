@@ -70,6 +70,7 @@ function toValues(p?: AdminProduct): ProductFormValues {
           selectCount: o.selectCount,
           priceOverride: o.priceOverride,
           stockQuantity: o.stockQuantity,
+          imageUrl: o.imageUrl ?? null,
           sortOrder: o.sortOrder,
           isActive: o.isActive,
         })),

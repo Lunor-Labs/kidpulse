@@ -42,6 +42,7 @@ jobs:
         run: |
           echo "API_URL=${{ vars.API_URL }}" >> .env
           echo "SITE_URL=${{ vars.SITE_URL }}" >> .env
+          echo "IMAGE_HOSTS=${{ vars.IMAGE_HOSTS }}" >> .env
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -99,6 +100,7 @@ jobs:
         run: |
           echo "API_URL=${{ vars.API_URL }}" >> .env
           echo "SITE_URL=${{ vars.SITE_URL }}" >> .env
+          echo "IMAGE_HOSTS=${{ vars.IMAGE_HOSTS }}" >> .env
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
