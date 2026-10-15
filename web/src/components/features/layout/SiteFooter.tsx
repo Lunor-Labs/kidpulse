@@ -30,6 +30,14 @@ const COLUMNS = [
     ],
   },
   {
+    heading: 'Policies',
+    links: [
+      ['Privacy Policy', '/privacy-policy'],
+      ['Terms & Conditions', '/terms'],
+      ['Refund Policy', '/refund-policy'],
+    ],
+  },
+  {
     heading: 'Payments',
     links: [
       ['PayHere', '#'],
@@ -50,7 +58,7 @@ export function SiteFooter() {
     <footer className="bg-brand-indigo-deep mt-[60px]">
 
       {/* Top grid */}
-      <div className="mx-auto max-w-7xl px-5 pb-9 pt-14 grid gap-8 grid-cols-2 sm:px-8 md:[grid-template-columns:1.4fr_1fr_1fr_1fr_1fr]">
+      <div className="mx-auto max-w-7xl px-5 pb-9 pt-14 grid gap-8 grid-cols-2 sm:px-8 md:[grid-template-columns:1.6fr_1fr_1fr_1fr_1fr_1fr]">
 
         {/* Brand column */}
         <div className="col-span-2 md:col-span-1">
@@ -99,6 +107,7 @@ export function SiteFooter() {
         ))}
       </div>
 
+      {/* Bottom bar */}
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="mx-auto max-w-7xl px-5 py-5 flex items-center justify-between flex-wrap gap-3 text-[0.78rem] text-white/45 sm:px-8">

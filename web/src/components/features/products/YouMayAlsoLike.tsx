@@ -2,17 +2,17 @@ import Link from 'next/link';
 import type { Product } from '@/types/catalog';
 
 const EMOJI: Record<string, string> = {
-  'painting-kits':    '🖌️',
-  'stem-kits':        '🧪',
+  'painting-kits': '🖌️',
+  'stem-kits': '🧪',
   'gift-collections': '🎁',
-  'learning-toys':    '🦁',
+  'learning-toys': '🦁',
 };
 
 const BG: Record<string, string> = {
-  'painting-kits':    'bg-[#fff4e0]',
-  'stem-kits':        'bg-[#e7f6ff]',
+  'painting-kits': 'bg-[#fff4e0]',
+  'stem-kits': 'bg-[#e7f6ff]',
   'gift-collections': 'bg-[#fde9f0]',
-  'learning-toys':    'bg-[#eef8e1]',
+  'learning-toys': 'bg-[#eef8e1]',
 };
 
 function formatPrice(p: number) {
@@ -58,8 +58,16 @@ export function YouMayAlsoLike({ products }: YouMayAlsoLikeProps) {
               href={`/products/${p.slug}`}
               className="group overflow-hidden rounded-[16px] border border-brand-line bg-white transition-[box-shadow,transform] duration-200 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(27,11,128,0.12)]"
             >
-              <div className={`flex h-[140px] items-center justify-center text-[48px] ${bg}`}>
-                {emoji}
+              <div className={`relative flex h-[140px] items-center justify-center text-[48px] overflow-hidden ${bg}`}>
+                {p.images[0] ? (
+                  <img
+                    src={p.images[0].url}
+                    alt={p.images[0].altText ?? p.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span>{emoji}</span>
+                )}
               </div>
               <div className="p-3">
                 <div className="mb-1 text-[0.7rem] font-bold uppercase tracking-[0.04em] text-brand-sky-deep">

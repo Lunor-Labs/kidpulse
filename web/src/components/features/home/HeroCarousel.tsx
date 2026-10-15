@@ -78,15 +78,7 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
         {/* RIGHT — Art */}
         <div className="relative flex h-[340px] items-end justify-center sm:h-[440px]">
 
-          {/* Blob behind image */}
-          <div
-            aria-hidden
-            className="absolute bottom-5 h-[340px] w-[340px] opacity-[0.16]"
-            style={{
-              borderRadius: '45% 55% 60% 40% / 50% 45% 55% 50%',
-              background: 'linear-gradient(135deg, #38b6ff, #ed3f7f)',
-            }}
-          />
+          
 
           {/* Banner image */}
           <Image
