@@ -55,7 +55,12 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
 
           {/* Headline */}
           <h1 className="font-display text-[clamp(2.3rem,4.4vw,3.6rem)] font-bold leading-[1.08] text-brand-indigo">
-            {active.headline}
+            {active.headline.split('\n').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
           </h1>
 
           {/* Subheadline */}
@@ -78,7 +83,7 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
         {/* RIGHT — Art */}
         <div className="relative flex h-[340px] items-end justify-center sm:h-[440px]">
 
-          
+
 
           {/* Banner image */}
           <Image
@@ -103,8 +108,8 @@ export function HeroCarousel({ banners }: { banners: HomeBanner[] }) {
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => setIdx(i)}
               className={`h-2 rounded-full transition-all ${i === idx
-                  ? 'w-6 bg-brand-indigo'
-                  : 'w-2 bg-brand-indigo/20 hover:bg-brand-indigo/40'
+                ? 'w-6 bg-brand-indigo'
+                : 'w-2 bg-brand-indigo/20 hover:bg-brand-indigo/40'
                 }`}
             />
           ))
