@@ -17,6 +17,9 @@ const EMPTY: AdminSettingsFormValues = {
   supportEmail: '',
   defaultShippingCost: 350,
   freeShippingThreshold: 5000,
+  newsletterHeading: '',
+  newsletterSubtext: '',
+  newsletterDiscountPct: 10,
 };
 
 function toValues(s: AdminSettings): AdminSettingsFormValues {
@@ -30,6 +33,9 @@ function toValues(s: AdminSettings): AdminSettingsFormValues {
     supportEmail: s.supportEmail ?? '',
     defaultShippingCost: s.defaultShippingCost ?? 350,
     freeShippingThreshold: s.freeShippingThreshold ?? 5000,
+    newsletterHeading: s.newsletterHeading ?? '',
+    newsletterSubtext: s.newsletterSubtext ?? '',
+    newsletterDiscountPct: s.newsletterDiscountPct ?? 10,
   };
 }
 
@@ -75,6 +81,9 @@ export function AdminSettingsForm() {
         supportEmail: nullish(values.supportEmail),
         defaultShippingCost: values.defaultShippingCost,
         freeShippingThreshold: values.freeShippingThreshold,
+        newsletterHeading: nullish(values.newsletterHeading),
+        newsletterSubtext: nullish(values.newsletterSubtext),
+        newsletterDiscountPct: values.newsletterDiscountPct,
       };
       const saved = await adminApi.updateSettings(payload, token);
       setValues(toValues(saved));
@@ -189,6 +198,42 @@ export function AdminSettingsForm() {
               className={inputClass}
               value={values.supportEmail ?? ''}
               onChange={(e) => update('supportEmail', e.target.value)}
+            />
+          </FormField>
+        </div>
+      </div>
+
+      {/* Newsletter banner */}
+      <div>
+        <h3 className="mb-2 font-semibold text-brand-ink">Newsletter banner</h3>
+        <p className="mb-3 text-[0.82rem] text-brand-ink-soft">
+          Shown at the bottom of the home page. Leave heading blank to auto-generate from the discount %.
+        </p>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <FormField label="Heading" hint='e.g. "Get 10% off your first order"'>
+            <input
+              className={inputClass}
+              value={values.newsletterHeading ?? ''}
+              onChange={(e) => update('newsletterHeading', e.target.value)}
+            />
+          </FormField>
+          <FormField label="Discount %" hint="Used to auto-generate heading when left blank (1–100)">
+            <input
+              type="number"
+              min={1}
+              max={100}
+              className={inputClass}
+              value={values.newsletterDiscountPct ?? ''}
+              onChange={(e) =>
+                update('newsletterDiscountPct', e.target.value ? Number(e.target.value) : null)
+              }
+            />
+          </FormField>
+          <FormField label="Subtext" hint="One line below the heading">
+            <input
+              className={inputClass}
+              value={values.newsletterSubtext ?? ''}
+              onChange={(e) => update('newsletterSubtext', e.target.value)}
             />
           </FormField>
         </div>

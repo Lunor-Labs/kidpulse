@@ -226,8 +226,12 @@ export interface AdminSettings {
   supportEmail: string | null;
   defaultShippingCost: number;
   freeShippingThreshold: number;
+  newsletterHeading: string | null;
+  newsletterSubtext: string | null;
+  newsletterDiscountPct: number | null;
   updatedAt: string;
 }
+
 
 export interface AdminOrderListItem {
   id: string;
@@ -629,4 +633,7 @@ export interface AdminSettingsFormValues {
   supportEmail: string | null;
   defaultShippingCost: number;
   freeShippingThreshold: number;
+  newsletterHeading: string | null;
+  newsletterSubtext: string | null;
+  newsletterDiscountPct: number | null;
 }

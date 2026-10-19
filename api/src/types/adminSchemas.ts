@@ -163,6 +163,9 @@ export const adminSettingsSchema = z.object({
   supportEmail: z.string().trim().email().nullable().optional(),
   defaultShippingCost: z.number().nonnegative().max(10_000_000).optional(),
   freeShippingThreshold: z.number().nonnegative().max(10_000_000).optional(),
+  newsletterHeading: z.string().trim().max(120).nullable().optional(),
+  newsletterSubtext: z.string().trim().max(280).nullable().optional(),
+  newsletterDiscountPct: z.number().int().min(1).max(100).nullable().optional(),
 });
 export type AdminSettingsInput = z.infer<typeof adminSettingsSchema>;
 
