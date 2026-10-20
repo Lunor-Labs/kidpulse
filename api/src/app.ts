@@ -15,6 +15,7 @@ import { paymentsRouter } from './routes/payments';
 import { productBannerRouter } from './routes/productBanners';
 import { productRouter } from './routes/products';
 import { mediaRouter } from './routes/media';
+import newsletterRouter from './routes/newsletter';
 
 export const app = express();
 
@@ -86,6 +87,8 @@ app.use('/api/v1/products', productRouter);
 app.use('/api/v1/banners', bannerRouter);
 app.use('/api/v1/product-banners', productBannerRouter);
 app.use('/api/v1/moments', momentsRouter);
+// Add after the moments line:
+app.use('/api/v1/newsletter', strictLimiter, newsletterRouter);
 app.use('/api/v1/checkout', strictLimiter, checkoutRouter);
 app.use('/api/v1/payments', strictLimiter, paymentsRouter);
 app.use('/api/v1/account', accountRouter);
