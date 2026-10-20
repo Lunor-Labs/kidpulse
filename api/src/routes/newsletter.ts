@@ -23,8 +23,9 @@ router.post('/subscribe', async (req, res) => {
       create: { email: email.toLowerCase() },
     });
     return res.json({ ok: true });
-  } catch {
-    return res.status(500).json({ error: 'Failed to subscribe' });
+    } catch (err) {
+    console.error('[newsletter] subscribe error:', err);
+    return res.status(500).json({ error: 'Failed to subscribe', detail: err instanceof Error ? err.message : String(err) });
   }
 });
 
