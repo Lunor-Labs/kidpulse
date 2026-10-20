@@ -19,7 +19,7 @@ export function NewsletterSignup() {
   const [config, setConfig] = useState<BannerConfig>(DEFAULTS);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/settings`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/newsletter/banner`)
       .then((r) => r.json())
       .then((res) => {
         const s = res?.data;
