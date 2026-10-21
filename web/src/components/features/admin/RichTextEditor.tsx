@@ -136,6 +136,19 @@ export function RichTextEditor({ value, onChange }: Props) {
         >
           📷 Image
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (editor.isActive('image')) {
+              editor.chain().focus().deleteSelection().run();
+            }
+          }}
+          disabled={!editor.isActive('image')}
+          className={editor.isActive('image') ? activeBtnClass : btnClass}
+          title="Remove selected image"
+        >
+          🗑 Remove image
+        </button>
         <input
           ref={fileInputRef}
           type="file"
@@ -164,7 +177,7 @@ export function RichTextEditor({ value, onChange }: Props) {
         </button>
       </div>
 
-      {/* Editor content — explicit styles since @tailwindcss/typography is not installed */}
+      {/* Editor content */}
       <style>{`
         .kidpulse-editor h1 { font-size: 1.6rem; font-weight: 700; color: #1a1a6e; margin-bottom: 0.5rem; }
         .kidpulse-editor h2 { font-size: 1.3rem; font-weight: 700; color: #1a1a6e; margin-bottom: 0.4rem; }
@@ -175,7 +188,8 @@ export function RichTextEditor({ value, onChange }: Props) {
         .kidpulse-editor li { margin-bottom: 0.2rem; }
         .kidpulse-editor strong { font-weight: 700; }
         .kidpulse-editor em { font-style: italic; }
-        .kidpulse-editor img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+        .kidpulse-editor img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; }
+        .kidpulse-editor img.ProseMirror-selectednode { outline: 3px solid #6366f1; border-radius: 8px; }
         .kidpulse-editor .is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;

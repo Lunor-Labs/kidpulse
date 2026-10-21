@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+import { EmailService } from '../services/EmailService';
 
 const router = Router();
+const emailService = new EmailService();
 
 const subscribeSchema = z.object({
   email: z.string().email(),
@@ -38,6 +40,17 @@ router.post('/subscribe', async (req, res) => {
       update: { isActive: true },
       create: { email: email.toLowerCase() },
     });
+
+    const settings = await prisma.adminSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { newsletterDiscountPct: true },
+    });
+    emailService
+      .sendNewsletterWelcome(email.toLowerCase(), {
+        discountPct: settings?.newsletterDiscountPct,
+      })
+      .catch(() => {});
+
     return res.json({ ok: true });
   } catch (err) {
     console.error('[newsletter] subscribe error:', err);

@@ -145,7 +145,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
       {/* ✅ About this kit — full-width separate row below the grid */}
       <div className="mt-8 rounded-[16px] border border-brand-line p-6">
-        <h2 className="mb-4 font-chewy text-[1.1rem] text-brand-indigo">About this kit</h2>
+        
         <div className="flex gap-6">
 
           {/* LEFT — fixed image */}

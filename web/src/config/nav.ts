@@ -18,6 +18,7 @@ export const ADMIN_NAV_LINKS: AdminNavLink[] = [
   { href: '/admin/coupons', label: 'Coupons', dropdownOnly: true },
   { href: '/admin/discounts', label: 'Auto-discounts', dropdownOnly: true },
   { href: '/admin/customers', label: 'Customers' },
+  { href: '/admin/newsletter', label: 'Newsletter', dropdownOnly: true },
   { href: '/admin/analytics', label: 'Analytics', dropdownOnly: true },
   { href: '/admin/settings', label: 'Settings', dropdownOnly: true },
   { href: '/admin/staff', label: 'Staff', superAdminOnly: true, dropdownOnly: true },
