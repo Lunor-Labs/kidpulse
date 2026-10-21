@@ -294,6 +294,19 @@ export const adminApi = {
     );
   },
 
+  listNewsletterSubscribers: (token: string | null) =>
+    apiClient.get<{ data: { id: string; email: string; subscribedAt: string }[]; total: number }>(
+      '/api/v1/admin/newsletter/subscribers',
+      token
+    ),
+
+  sendNewsletter: (token: string | null, data: { subject: string; body: string }) =>
+    apiClient.post<{ ok: boolean; sent: number; failed: number }>(
+      '/api/v1/admin/newsletter/send',
+      data,
+      token
+    ),
+
   uploadImage: (
     body: {
       filename: string;

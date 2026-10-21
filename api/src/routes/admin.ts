@@ -1,4 +1,6 @@
 import { Router, json } from 'express';
+import { prisma } from '../lib/prisma';
+import { EmailService } from '../services/EmailService';
 import { authenticate, requireRole, requireSuperAdmin } from '../middleware/auth';
 import { adminActionLog } from '../middleware/adminActionLog';
 import { validateBody } from '../middleware/validate';
@@ -50,6 +52,7 @@ const customers = new AdminCustomerController();
 const analytics = new AdminAnalyticsController();
 const staff = new AdminStaffController();
 const actionLog = new AdminActionLogController();
+const emailService = new EmailService();
 
 adminRouter.use(authenticate, requireRole('staff', 'super_admin'), adminActionLog);
 
@@ -201,3 +204,53 @@ adminRouter.post(
   validateBody(imageUploadSchema),
   products.uploadImage
 );
+
+adminRouter.get('/newsletter/subscribers', async (_req, res) => {
+  const subscribers = await prisma.newsletterSubscriber.findMany({
+    where: { isActive: true },
+    orderBy: { subscribedAt: 'desc' },
+    select: { id: true, email: true, subscribedAt: true },
+  });
+  return res.json({ data: subscribers, total: subscribers.length });
+});
+
+adminRouter.get('/newsletter/subscribers/csv', async (_req, res) => {
+  const subscribers = await prisma.newsletterSubscriber.findMany({
+    where: { isActive: true },
+    orderBy: { subscribedAt: 'desc' },
+    select: { email: true, subscribedAt: true },
+  });
+  const csv = [
+    'Email,Subscribed At',
+    ...subscribers.map((s) => `${s.email},${s.subscribedAt.toISOString()}`),
+  ].join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="newsletter-subscribers.csv"');
+  return res.send(csv);
+});
+
+adminRouter.post('/newsletter/send', async (req, res) => {
+  const { subject, body } = req.body as { subject?: string; body?: string };
+  if (!subject?.trim() || !body?.trim()) {
+    return res.status(400).json({ error: 'Subject and body are required' });
+  }
+  try {
+    const subscribers = await prisma.newsletterSubscriber.findMany({
+      where: { isActive: true },
+      select: { email: true },
+    });
+    if (subscribers.length === 0) {
+      return res.json({ ok: true, sent: 0 });
+    }
+    const results = await Promise.allSettled(
+      subscribers.map((s) => emailService.sendNewsletter(s.email, subject.trim(), body.trim()))
+    );
+    const sent = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.length - sent;
+    console.log(`[newsletter/send] sent=${sent} failed=${failed}`);
+    return res.json({ ok: true, sent, failed });
+  } catch (err) {
+    console.error('[newsletter/send] error:', err);
+    return res.status(500).json({ error: 'Failed to send newsletter' });
+  }
+});

@@ -85,13 +85,11 @@ function itemsTable(ctx: OrderEmailContext): string {
     ${rows}
     <tr><td colspan="2" style="border-top:1px solid #eee;padding-top:8px"></td></tr>
     <tr><td>Subtotal</td><td style="text-align:right">${fmt(ctx.subtotal, ctx.currency)}</td></tr>
-    ${
-      ctx.discountAmount > 0
-        ? `<tr><td>Discount</td><td style="text-align:right;color:#6b8e23">−${fmt(ctx.discountAmount, ctx.currency)}</td></tr>`
-        : ''
+    ${ctx.discountAmount > 0
+      ? `<tr><td>Discount</td><td style="text-align:right;color:#6b8e23">−${fmt(ctx.discountAmount, ctx.currency)}</td></tr>`
+      : ''
     }
-    <tr><td>Shipping</td><td style="text-align:right">${
-      ctx.shippingAmount === 0 ? 'Free' : fmt(ctx.shippingAmount, ctx.currency)
+    <tr><td>Shipping</td><td style="text-align:right">${ctx.shippingAmount === 0 ? 'Free' : fmt(ctx.shippingAmount, ctx.currency)
     }</td></tr>
     <tr><td style="font-weight:700;padding-top:8px;border-top:1px solid #eee">Total</td>
         <td style="text-align:right;font-weight:700;padding-top:8px;border-top:1px solid #eee">${fmt(ctx.total, ctx.currency)}</td></tr>
@@ -221,11 +219,10 @@ export class EmailService {
       `<p>Hi ${escapeHtml(ctx.customerName)},</p>
        <p>Your order <strong>${escapeHtml(ctx.orderNumber)}</strong> is reserved. Please transfer <strong>${fmt(ctx.total, ctx.currency)}</strong> within <strong>${bank.deadlineDays} day(s)</strong> to the account below.</p>
        <table style="font-size:14px;margin-top:8px">${bankRows}</table>
-       ${
-         bank.whatsappNumber
-           ? `<p>After the transfer, send the receipt to WhatsApp: <strong>${escapeHtml(bank.whatsappNumber)}</strong></p>`
-           : ''
-       }
+       ${bank.whatsappNumber
+        ? `<p>After the transfer, send the receipt to WhatsApp: <strong>${escapeHtml(bank.whatsappNumber)}</strong></p>`
+        : ''
+      }
        ${itemsTable(ctx)}
        ${shipBlock(ctx)}`
     );
@@ -257,11 +254,9 @@ export class EmailService {
     const rows = items
       .map(
         (item) =>
-          `<tr><td style="padding:6px 0">${escapeHtml(item.name)}${
-            item.sku ? ` <span style="color:#8b8899">(${escapeHtml(item.sku)})</span>` : ''
+          `<tr><td style="padding:6px 0">${escapeHtml(item.name)}${item.sku ? ` <span style="color:#8b8899">(${escapeHtml(item.sku)})</span>` : ''
           }</td>
-          <td style="padding:6px 0;text-align:right;font-weight:700;color:${
-            item.stockQuantity === 0 ? '#c0392b' : '#b8860b'
+          <td style="padding:6px 0;text-align:right;font-weight:700;color:${item.stockQuantity === 0 ? '#c0392b' : '#b8860b'
           }">${item.stockQuantity} left</td></tr>`
       )
       .join('');
@@ -274,27 +269,48 @@ export class EmailService {
     await this.send(to, `Low stock alert — ${items.length} product${items.length !== 1 ? 's' : ''}`, html);
   }
 
-async sendWelcomeGuest(to: string, ctx: WelcomeGuestContext): Promise<void> {
-  const html = baseLayout(
-    'Welcome to KidPulse',
-    `<p>Hi ${escapeHtml(ctx.fullName)},</p>
+  async sendWelcomeGuest(to: string, ctx: WelcomeGuestContext): Promise<void> {
+    const html = baseLayout(
+      'Welcome to KidPulse',
+      `<p>Hi ${escapeHtml(ctx.fullName)},</p>
      <p>We've created a KidPulse account for you so you can track your order and shop faster next time.</p>
      <p>Click the button below to set your password and access your account:</p>
      <p><a href="${ctx.loginUrl}" style="display:inline-block;background:#3f3d81;color:white;padding:10px 18px;border-radius:10px;text-decoration:none">Set your password</a></p>
      <p style="font-size:13px;color:#8b8899">This link expires in 72 hours. Once you've set your password, you can log in at any time to view your orders.</p>
      <p style="font-size:12px;color:#8b8899">If you didn't place an order on KidPulse, you can safely ignore this email.</p>`
-  );
-  await this.send(to, 'Welcome to KidPulse — set your password', html);
-}
+    );
+    await this.send(to, 'Welcome to KidPulse — set your password', html);
+  }
 
   async sendPasswordReset(to: string, ctx: { resetUrl: string }): Promise<void> {
-  const html = baseLayout(
-    'Reset your password',
-    `<p>Hi,</p>
+    const html = baseLayout(
+      'Reset your password',
+      `<p>Hi,</p>
      <p>We received a request to reset the password for your KidPulse account.</p>
      <p><a href="${ctx.resetUrl}" style="display:inline-block;background:#3f3d81;color:white;padding:10px 18px;border-radius:10px;text-decoration:none">Reset password</a></p>
      <p style="font-size:13px;color:#8b8899">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>`
-  );
-  await this.send(to, 'Reset your KidPulse password', html);
+    );
+    await this.send(to, 'Reset your KidPulse password', html);
+  }
+
+  async sendNewsletterWelcome(to: string, ctx: { discountPct?: number | null }): Promise<void> {
+    const offerLine = ctx.discountPct
+      ? `<p>As a thank-you, use code <strong>WELCOME${ctx.discountPct}</strong> at checkout to get <strong>${ctx.discountPct}% off</strong> your first order.</p>`
+      : '';
+    const html = baseLayout(
+      'Welcome to the KidPulse newsletter',
+      `<p>Hi there,</p>
+       <p>You're on the list! 🎉 We'll keep you updated with new kit drops, parenting tips, and exclusive discounts.</p>
+       ${offerLine}
+       <p style="font-size:13px;color:#8b8899">If you didn't sign up for this, you can safely ignore this email.</p>`
+    );
+    await this.send(to, 'Welcome to the KidPulse newsletter', html);
+  }
+  async sendNewsletter(to: string, subject: string, body: string): Promise<void> {
+    const html = baseLayout(
+      subject,
+      `<div style="white-space:pre-wrap">${body.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`
+    );
+    await this.send(to, subject, html);
   }
 }
