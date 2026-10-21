@@ -19,27 +19,42 @@ export function NewsletterSubscribersClient() {
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     adminApi
       .listNewsletterSubscribers(token)
-      .then((res) => { setSubscribers(res.data); setTotal(res.total); })
+      .then((res) => {
+        setSubscribers(res.data ?? []);
+        setTotal(res.total ?? 0);
+      })
+      .catch(() => {
+        setSubscribers([]);
+        setTotal(0);
+      })
       .finally(() => setLoading(false));
   }, [token]);
 
   async function handleExport() {
     setExporting(true);
     try {
-      await downloadCsv('/api/v1/newsletter/subscribers/csv', 'newsletter-subscribers.csv', token);
+      await downloadCsv(
+        '/api/v1/admin/newsletter/subscribers/csv',
+        'newsletter-subscribers.csv',
+        token
+      );
     } finally {
       setExporting(false);
     }
   }
 
+  const subtitle = loading
+    ? 'Loading…'
+    : `${total} active subscriber${total !== 1 ? 's' : ''}`;
+
   return (
-    <AccountCard
-      title="Newsletter subscribers"
-      subtitle={loading ? undefined : `${total} active subscriber${total !== 1 ? 's' : ''}`}
-    >
+    <AccountCard title="Newsletter subscribers" subtitle={subtitle}>
       <div className="mb-4 flex justify-end">
         <button
           onClick={handleExport}
@@ -69,7 +84,9 @@ export function NewsletterSubscribersClient() {
                   <td className="px-4 py-3 text-brand-ink">{s.email}</td>
                   <td className="px-4 py-3 text-brand-ink-soft">
                     {new Date(s.subscribedAt).toLocaleDateString('en-LK', {
-                      year: 'numeric', month: 'short', day: 'numeric',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
                     })}
                   </td>
                 </tr>
