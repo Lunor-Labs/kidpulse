@@ -103,9 +103,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     };
   }
 
-  // Extract first image from description for left panel
+  // Use only description image for left panel — never the main product image
   const firstImageMatch = product.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-  const firstImageSrc = firstImageMatch?.[1] ?? product.images[0]?.url ?? null;
+  const firstImageSrc = firstImageMatch?.[1] ?? null;
   const descriptionWithoutFirstImage = product.description.replace(/<img[^>]+>/i, '');
 
   return (
@@ -143,27 +143,22 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </div>
       </div>
 
-      {/* ✅ About this kit — full-width separate row below the grid */}
+      {/* ── Description section ── */}
       <div className="mt-8 rounded-[16px] border border-brand-line p-6">
-        
         <div className="flex gap-6">
 
-          {/* LEFT — fixed image */}
-          <div className="sticky top-[88px] self-start w-[340px] shrink-0">
-            {firstImageSrc ? (
+          {/* LEFT — description image only, nothing if not set */}
+          {firstImageSrc && (
+            <div className="sticky top-[88px] self-start w-[340px] shrink-0">
               <img
                 src={firstImageSrc}
                 alt={product.name}
                 className="w-full rounded-[12px] object-cover"
               />
-            ) : (
-              <div className="flex h-[260px] items-center justify-center rounded-[12px] bg-brand-cream text-[3rem]">
-                🎨
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* RIGHT — scrollable description */}
+          {/* RIGHT — description text without the image (already shown on left) */}
           <div className="max-h-[460px] flex-1 overflow-y-auto pr-2 [scrollbar-width:thin]">
             <div
               className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:rounded-[12px] [&_img]:my-3"
