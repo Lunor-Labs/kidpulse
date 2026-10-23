@@ -228,7 +228,7 @@ export function RichTextEditor({ value, onChange }: Props) {
         .kidpulse-editor li { margin-bottom: 0.2rem; }
         .kidpulse-editor strong { font-weight: 700; }
         .kidpulse-editor em { font-style: italic; }
-        .kidpulse-editor img { max-width: 500px; display: block; margin: 0.75rem auto; border-radius: 8px; cursor: pointer; border: 2px dashed transparent; }
+        .kidpulse-editor img { max-width: 100%; width: 100%; height: 400px; object-fit: cover; display: block; margin: 0.75rem 0; border-radius: 8px; cursor: pointer; border: 2px dashed transparent; }
         .kidpulse-editor img:hover { border: 2px dashed #ef4444; }
         .kidpulse-editor .is-editor-empty:first-child::before {
           content: attr(data-placeholder);
