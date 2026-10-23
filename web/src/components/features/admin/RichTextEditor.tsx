@@ -95,8 +95,6 @@ export function RichTextEditor({ value, onChange }: Props) {
     },
   });
 
-  // Sync late-arriving content (product loaded after editor mounted)
-  // Guard: skip if value is empty/falsy — prevents wiping editor before product data loads
   useEffect(() => {
     if (!editor || !value) return;
     if (value === lastSetValue.current) return;
@@ -105,7 +103,6 @@ export function RichTextEditor({ value, onChange }: Props) {
     editor.commands.setContent(value, { emitUpdate: false });
   }, [editor, value]);
 
-  // Click image directly in editor to remove it
   useEffect(() => {
     if (!editor) return;
     const dom = editor.view.dom;
@@ -231,7 +228,7 @@ export function RichTextEditor({ value, onChange }: Props) {
         .kidpulse-editor li { margin-bottom: 0.2rem; }
         .kidpulse-editor strong { font-weight: 700; }
         .kidpulse-editor em { font-style: italic; }
-        .kidpulse-editor img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; border: 2px dashed transparent; }
+        .kidpulse-editor img { max-width: 500px; display: block; margin: 0.75rem auto; border-radius: 8px; cursor: pointer; border: 2px dashed transparent; }
         .kidpulse-editor img:hover { border: 2px dashed #ef4444; }
         .kidpulse-editor .is-editor-empty:first-child::before {
           content: attr(data-placeholder);

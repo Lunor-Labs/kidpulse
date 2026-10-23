@@ -103,11 +103,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     };
   }
 
-  // Use only description image for left panel — never the main product image
-  const firstImageMatch = product.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-  const firstImageSrc = firstImageMatch?.[1] ?? null;
-  const descriptionWithoutFirstImage = product.description.replace(/<img[^>]+>/i, '');
-
   return (
     <div className="mx-auto max-w-7xl px-8 py-10 max-[980px]:px-4 max-[980px]:py-6">
       <script
@@ -143,35 +138,17 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </div>
       </div>
 
-      {/* ── Description section ── */}
+      {/* ── Description section — full width, image inline within text ── */}
       <div className="mt-8 rounded-[16px] border border-brand-line p-6">
-        <div className="flex gap-6">
-
-          {/* LEFT — description image only, nothing if not set */}
-          {firstImageSrc && (
-            <div className="sticky top-[88px] self-start w-[340px] shrink-0">
-              <img
-                src={firstImageSrc}
-                alt={product.name}
-                className="w-full rounded-[12px] object-cover"
-              />
-            </div>
-          )}
-
-          {/* RIGHT — description text without the image (already shown on left) */}
-          <div className="max-h-[460px] flex-1 overflow-y-auto pr-2 [scrollbar-width:thin]">
-            <div
-              className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:rounded-[12px] [&_img]:my-3"
-              dangerouslySetInnerHTML={{ __html: descriptionWithoutFirstImage }}
-            />
-            {product.ageRangeMin && product.ageRangeMax && (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-[10px] bg-brand-cream px-4 py-2 text-[0.82rem] font-semibold text-brand-indigo">
-                👶 Recommended for ages {product.ageRangeMin}–{product.ageRangeMax}
-              </div>
-            )}
+        <div
+          className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-[500px] [&_img]:rounded-[12px] [&_img]:my-3 [&_img]:mx-auto [&_img]:block"
+          dangerouslySetInnerHTML={{ __html: product.description }}
+        />
+        {product.ageRangeMin && product.ageRangeMax && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-[10px] bg-brand-cream px-4 py-2 text-[0.82rem] font-semibold text-brand-indigo">
+            👶 Recommended for ages {product.ageRangeMin}–{product.ageRangeMax}
           </div>
-
-        </div>
+        )}
       </div>
 
       <ProductReviews
