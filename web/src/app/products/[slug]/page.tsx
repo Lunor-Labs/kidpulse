@@ -141,7 +141,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       {/* ── Description section — full width, image inline within text ── */}
       <div className="mt-8 rounded-[16px] border border-brand-line p-6">
         <div
-          className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:max-w-full [&_img]:w-full [&_img]:h-[400px] [&_img]:object-cover [&_img]:rounded-[12px] [&_img]:my-3"
+          className="text-[0.92rem] leading-relaxed text-brand-ink-soft [&_h1]:font-chewy [&_h1]:text-[1.4rem] [&_h1]:text-brand-indigo [&_h1]:mb-2 [&_h2]:font-chewy [&_h2]:text-[1.15rem] [&_h2]:text-brand-indigo [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-[1rem] [&_h3]:text-brand-ink [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_img]:w-full [&_img]:rounded-[12px] [&_img]:my-3"
           dangerouslySetInnerHTML={{ __html: product.description }}
         />
         {product.ageRangeMin && product.ageRangeMax && (
