@@ -108,15 +108,16 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'kidpulse-cart',
-      version: 2, // ✅ bump version to trigger migration
+      version: 3, // ✅ bump version to trigger migration
       migrate: (persistedState: any, version: number) => {
-        if (version < 2) {
+        if (version < 3) {
           // ✅ old carts have no cartKey — generate one for each item
           return {
             ...persistedState,
             items: (persistedState.items ?? []).map((item: any) => ({
               ...item,
               cartKey: item.cartKey ?? generateCartKey(),
+              shippingCost: item.shippingCost ?? null,
             })),
           };
         }
