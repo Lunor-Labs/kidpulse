@@ -21,6 +21,7 @@ export function AddToCartButton({ product }: { product: Product }) {
       name: product.name,
       price: product.price,
       imageUrl: product.images[0]?.url ?? null,
+      shippingCost: product.shippingCost ?? null,
     });
     toast.success(`${product.name} added to cart`);
   };
