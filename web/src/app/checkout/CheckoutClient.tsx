@@ -118,7 +118,7 @@ export function CheckoutClient() {
   const subtotalAfterDiscount = Math.max(0, subtotal - totalDiscountAmount);
 
   const productShippingCosts = items
-    .map((i) => (i as any).shippingCost as number | null | undefined)
+  .map((i) => i.shippingCost)
     .filter((c): c is number => c !== null && c !== undefined);
   const estimatedShippingRate =
     productShippingCosts.length > 0 ? Math.max(...productShippingCosts) : defaultShipping;

@@ -16,6 +16,7 @@ export interface CartItem {
   price: number;
   imageUrl: string | null;
   quantity: number;
+  shippingCost: number | null;
 }
 
 function generateCartKey(): string {
