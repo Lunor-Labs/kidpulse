@@ -51,9 +51,16 @@ export class OrderController {
           deletedAt: null,
           isActive: true,
         },
-        select: { id: true, categoryId: true, price: true },
+        select: { id: true, categoryId: true, price: true, shippingCost: true },
       });
       const byId = new Map(products.map((p) => [p.id, p]));
+
+      const adminSettings = await prisma.adminSettings.findUnique({
+        where: { id: 'singleton' },
+        select: { defaultShippingCost: true, freeShippingThreshold: true },
+      });
+      const defaultShippingCost = Number(adminSettings?.defaultShippingCost ?? 350);
+      const freeShippingThreshold = Number(adminSettings?.freeShippingThreshold ?? 5000);
 
       const lines = body.items.map((item) => {
         const product = byId.get(item.productId);
@@ -81,9 +88,21 @@ export class OrderController {
         body.couponCode ?? null
       );
 
+      // Mirrors OrderService.checkout so the storefront shows what will be charged.
+      const subtotalAfterDiscount = Math.max(0, pricing.subtotal - pricing.totalDiscount);
+      const productShippingCosts = lines
+        .map((l) => byId.get(l.productId)?.shippingCost)
+        .filter((c): c is NonNullable<typeof c> => c !== null && c !== undefined)
+        .map(Number);
+      const shippingRate =
+        productShippingCosts.length > 0 ? Math.max(...productShippingCosts) : defaultShippingCost;
+      const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : shippingRate;
+
       res.json({
         data: {
           subtotal: pricing.subtotal,
+          shippingAmount,
+          freeShippingThreshold,
           autoDiscountAmount: pricing.autoDiscountAmount,
           quantityDiscountAmount: pricing.quantityDiscountAmount,
           spendThresholdDiscountAmount: pricing.spendThresholdDiscountAmount,

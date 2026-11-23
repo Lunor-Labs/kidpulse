@@ -91,6 +91,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             name: product.name,
             price: pack.priceOverride ?? product.price,
             imageUrl: product.images[0]?.url ?? null,
+            shippingCost: product.shippingCost ?? null,
           },
           1
         );
@@ -108,6 +109,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           name: product.name,
           price: activePrice,
           imageUrl: selectedVariant?.imageUrl ?? product.images[0]?.url ?? null,
+          shippingCost: product.shippingCost ?? null,
         },
         quantity
       );
