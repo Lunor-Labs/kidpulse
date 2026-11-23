@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Baloo_2, Fredoka, Chewy, Roboto } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Toaster } from 'sonner';
 import { AnnouncementBar } from '@/components/features/layout/AnnouncementBar';
 import { SiteHeader } from '@/components/features/layout/SiteHeader';
@@ -7,10 +7,33 @@ import { SiteFooter } from '@/components/features/layout/SiteFooter';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import './globals.css';
 
-const baloo = Baloo_2({ subsets: ['latin'], variable: '--font-baloo', display: 'swap' });
-const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-fredoka', display: 'swap' });
-const chewy = Chewy({ subsets: ['latin'], variable: '--font-chewy', weight: '400', display: 'swap' });
-const roboto = Roboto({ subsets: ['latin'], variable: '--font-roboto', weight: ['400', '500', '700'], display: 'swap' });
+// Fonts are self-hosted (latin subset, from Fontsource) instead of next/font/google
+// so the build never depends on reaching Google Fonts — a failed download there
+// breaks the Turbopack build in CI.
+const baloo = localFont({
+  src: './fonts/baloo-2-latin-wght-normal.woff2',
+  weight: '400 800',
+  variable: '--font-baloo',
+  display: 'swap',
+});
+const fredoka = localFont({
+  src: './fonts/fredoka-latin-wght-normal.woff2',
+  weight: '300 700',
+  variable: '--font-fredoka',
+  display: 'swap',
+});
+const chewy = localFont({
+  src: './fonts/chewy-latin-400-normal.woff2',
+  weight: '400',
+  variable: '--font-chewy',
+  display: 'swap',
+});
+const roboto = localFont({
+  src: './fonts/roboto-latin-wght-normal.woff2',
+  weight: '100 900',
+  variable: '--font-roboto',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
