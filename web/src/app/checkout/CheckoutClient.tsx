@@ -77,7 +77,6 @@ const inputClass =
 const inputErrorClass =
   'w-full rounded-[10px] border border-brand-berry bg-white px-3 py-2 text-[0.9rem] text-brand-ink focus:border-brand-berry focus:outline-none';
 
-const API_BASE = process.env.API_URL ?? 'http://localhost:4000';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s\-()]{7,20}$/;
@@ -103,8 +102,9 @@ export function CheckoutClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [defaultShipping, setDefaultShipping] = useState(350);
-  const [freeThreshold, setFreeThreshold] = useState(5000);
+  // Shipping comes from the server cart preview (uses admin settings + product overrides).
+  const [shippingAmount, setShippingAmount] = useState<number | null>(null);
+  const [freeThreshold, setFreeThreshold] = useState<number | null>(null);
 
   const [autoDiscountAmount, setAutoDiscountAmount] = useState(0);
   const [quantityDiscountAmount, setQuantityDiscountAmount] = useState(0);
@@ -117,29 +117,10 @@ export function CheckoutClient() {
     autoDiscountAmount + quantityDiscountAmount + spendThresholdDiscountAmount + couponDiscountAmount;
   const subtotalAfterDiscount = Math.max(0, subtotal - totalDiscountAmount);
 
-  const productShippingCosts = items
-  .map((i) => i.shippingCost)
-    .filter((c): c is number => c !== null && c !== undefined);
-  const estimatedShippingRate =
-    productShippingCosts.length > 0 ? Math.max(...productShippingCosts) : defaultShipping;
-  const shippingAmount = subtotalAfterDiscount >= freeThreshold ? 0 : estimatedShippingRate;
-  const total = subtotalAfterDiscount + shippingAmount;
+  const total = subtotalAfterDiscount + (shippingAmount ?? 0);
 
   const emailInvalid = !!shipping.email && !EMAIL_RE.test(shipping.email);
   const phoneInvalid = !!shipping.phone && !PHONE_RE.test(shipping.phone);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/v1/admin/settings`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        const data = res.data;
-        if (data?.defaultShippingCost != null) setDefaultShipping(Number(data.defaultShippingCost));
-        if (data?.freeShippingThreshold != null) setFreeThreshold(Number(data.freeShippingThreshold));
-      })
-      .catch(() => {});
-  }, [token]);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -160,6 +141,8 @@ export function CheckoutClient() {
         setAutoDiscountAmount(result.autoDiscountAmount);
         setQuantityDiscountAmount(result.quantityDiscountAmount);
         setSpendThresholdDiscountAmount(result.spendThresholdDiscountAmount);
+        setShippingAmount(result.shippingAmount);
+        setFreeThreshold(result.freeShippingThreshold);
         if (result.coupon && !coupon) {
           setCoupon(result.coupon);
         }
@@ -675,14 +658,16 @@ export function CheckoutClient() {
             <div className="flex justify-between">
               <dt className="text-brand-ink-soft">Shipping</dt>
               <dd>
-                {shippingAmount === 0 ? (
+                {shippingAmount === null ? (
+                  '—'
+                ) : shippingAmount === 0 ? (
                   <span className="font-semibold text-brand-olive">Free</span>
                 ) : (
                   formatLKR(shippingAmount)
                 )}
               </dd>
             </div>
-            {shippingAmount > 0 && subtotalAfterDiscount < freeThreshold && (
+            {shippingAmount !== null && shippingAmount > 0 && freeThreshold !== null && subtotalAfterDiscount < freeThreshold && (
               <div className="text-[0.76rem] text-brand-ink-soft">
                 Add {formatLKR(freeThreshold - subtotalAfterDiscount)} more for free shipping
               </div>

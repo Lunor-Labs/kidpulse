@@ -12,6 +12,8 @@ import type {
 
 export interface CartPreviewResult {
   subtotal: number;
+  shippingAmount: number;
+  freeShippingThreshold: number;
   autoDiscountAmount: number;
   quantityDiscountAmount: number;
   spendThresholdDiscountAmount: number;
