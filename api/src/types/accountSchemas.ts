@@ -48,6 +48,7 @@ export const stageSelectionSchema = z.object({
 export const cartItemSchema = z.object({
   productId: z.string().trim().min(1),
   variantId: z.string().trim().min(1).nullable().optional(),
+  stage1OptionId: z.string().trim().min(1).nullable().optional(),
   stageSelections: z.array(stageSelectionSchema).nullable().optional(),
   quantity: z.number().int().min(1).max(99),
 });

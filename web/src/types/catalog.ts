@@ -209,7 +209,13 @@ export interface CheckoutShippingInput {
 }
 
 export interface CheckoutInput {
-  items: Array<{ productId: string; variantId?: string | null; quantity: number }>;
+  items: Array<{
+    productId: string;
+    variantId?: string | null;
+    stage1OptionId?: string | null;
+    stageSelections?: Array<{ optionId: string; quantity: number }> | null;
+    quantity: number;
+  }>;
   addressId?: string | null;
   shippingAddress?: CheckoutShippingInput | null;
   paymentMethod: PaymentMethod;
