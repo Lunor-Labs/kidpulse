@@ -278,7 +278,7 @@ export class OrderService {
         input.stage1OptionId &&
         (!stage1Option ||
           stage1Option.stage.productId !== product.id ||
-          stage1Option.stage.stageOrder !== 1)
+          stage1Option.stage.stageOrder !== 0)
       ) {
         throw new AppError(`Selected pack of "${product.name}" is no longer available`, 400);
       }
