@@ -11,6 +11,7 @@ export interface CartItem {
   productId: string;
   variantId: string | null;
   variantLabel: string | null;
+  stage1OptionId: string | null;
   stageSelections: StageSelection[] | null;
   name: string;
   price: number;
@@ -27,10 +28,12 @@ function sameLine(
   item: CartItem,
   productId: string,
   variantId: string | null,
+  stage1OptionId: string | null,
   stageSelections: StageSelection[] | null
 ) {
   if (item.productId !== productId) return false;
   if ((item.variantId ?? null) !== (variantId ?? null)) return false;
+  if ((item.stage1OptionId ?? null) !== (stage1OptionId ?? null)) return false;
   if (stageSelections && item.stageSelections) {
     if (stageSelections.length !== item.stageSelections.length) return false;
     return stageSelections.every((sel) => {
@@ -44,8 +47,8 @@ function sameLine(
 interface CartState {
   items: CartItem[];
   addItem: (
-    item: Omit<CartItem, 'quantity' | 'cartKey' | 'variantId' | 'variantLabel' | 'stageSelections'> &
-      Partial<Pick<CartItem, 'variantId' | 'variantLabel' | 'stageSelections'>>,
+    item: Omit<CartItem, 'quantity' | 'cartKey' | 'variantId' | 'variantLabel' | 'stage1OptionId' | 'stageSelections'> &
+      Partial<Pick<CartItem, 'variantId' | 'variantLabel' | 'stage1OptionId' | 'stageSelections'>>,
     quantity?: number
   ) => void;
   removeItem: (cartKey: string) => void;
@@ -61,9 +64,10 @@ export const useCartStore = create<CartState>()(
       addItem: (item, quantity = 1) =>
         set((state) => {
           const variantId = item.variantId ?? null;
+          const stage1OptionId = item.stage1OptionId ?? null;
           const stageSelections = item.stageSelections ?? null;
           const existing = state.items.find((i) =>
-            sameLine(i, item.productId, variantId, stageSelections)
+            sameLine(i, item.productId, variantId, stage1OptionId, stageSelections)
           );
           if (existing) {
             return {
@@ -82,6 +86,7 @@ export const useCartStore = create<CartState>()(
                 cartKey: generateCartKey(),
                 variantId,
                 variantLabel: item.variantLabel ?? null,
+                stage1OptionId,
                 stageSelections,
                 quantity,
               },
@@ -108,16 +113,17 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'kidpulse-cart',
-      version: 3, // ✅ bump version to trigger migration
+      version: 4,
       migrate: (persistedState: any, version: number) => {
-        if (version < 3) {
-          // ✅ old carts have no cartKey — generate one for each item
+        if (version < 4) {
+          // Normalize fields added after older carts were persisted.
           return {
             ...persistedState,
             items: (persistedState.items ?? []).map((item: any) => ({
               ...item,
               cartKey: item.cartKey ?? generateCartKey(),
               shippingCost: item.shippingCost ?? null,
+              stage1OptionId: item.stage1OptionId ?? null,
             })),
           };
         }

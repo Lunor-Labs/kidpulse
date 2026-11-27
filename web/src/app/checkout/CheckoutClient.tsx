@@ -195,6 +195,7 @@ export function CheckoutClient() {
       items: items.map((i) => ({
         productId: i.productId,
         variantId: i.variantId ?? null,
+        stage1OptionId: i.stage1OptionId ?? null,
         // ✅ Fix: renamed from stageOptionIds to stageSelections
         stageSelections: i.stageSelections ?? null,
         quantity: i.quantity,

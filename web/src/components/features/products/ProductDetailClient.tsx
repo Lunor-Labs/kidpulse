@@ -87,6 +87,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             productId: product.id,
             variantId: null,
             variantLabel: pack.displayLabel,
+            stage1OptionId: pack.stage1OptionId,
             stageSelections: pack.stageSelections,
             name: product.name,
             price: pack.priceOverride ?? product.price,

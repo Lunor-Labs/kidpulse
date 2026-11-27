@@ -233,20 +233,26 @@ export class OrderService {
     });
     const byId = new Map(products.map((p) => [p.id, p]));
 
-    // ✅ Collect all optionIds from stageSelections for stock lookup
+    // Collect selected stage options for stock validation and stage-1 pricing.
     const allStageOptionIds = items
-      .flatMap((i) => i.stageSelections?.map((s) => s.optionId) ?? [])
+      .flatMap((i) => [
+        ...(i.stage1OptionId ? [i.stage1OptionId] : []),
+        ...(i.stageSelections?.map((s) => s.optionId) ?? []),
+      ])
       .filter(Boolean);
-    const stageOptionsMap = new Map<string, { id: string; stockQuantity: number; label: string }>();
-    if (allStageOptionIds.length > 0) {
-      const stageOptions = await prisma.variantStageOption.findMany({
-        where: { id: { in: allStageOptionIds }, isActive: true },
-        select: { id: true, stockQuantity: true, label: true },
-      });
-      for (const opt of stageOptions) {
-        stageOptionsMap.set(opt.id, opt);
-      }
-    }
+    const stageOptions = allStageOptionIds.length > 0
+      ? await prisma.variantStageOption.findMany({
+          where: { id: { in: allStageOptionIds }, isActive: true },
+          select: {
+            id: true,
+            stockQuantity: true,
+            label: true,
+            priceOverride: true,
+            stage: { select: { productId: true, stageOrder: true } },
+          },
+        })
+      : [];
+    const stageOptionsMap = new Map(stageOptions.map((opt) => [opt.id, opt]));
 
     let subtotal = 0;
     const priced = items.map((input) => {
@@ -262,6 +268,20 @@ export class OrderService {
 
       // ✅ Validate stageSelections — check stock per character per quantity
       const stageSelections = input.stageSelections ?? null;
+      if (stageSelections?.length && !input.stage1OptionId) {
+        throw new AppError(`Please reselect the pack for "${product.name}"`, 400);
+      }
+      const stage1Option = input.stage1OptionId
+        ? stageOptionsMap.get(input.stage1OptionId)
+        : undefined;
+      if (
+        input.stage1OptionId &&
+        (!stage1Option ||
+          stage1Option.stage.productId !== product.id ||
+          stage1Option.stage.stageOrder !== 1)
+      ) {
+        throw new AppError(`Selected pack of "${product.name}" is no longer available`, 400);
+      }
       if (stageSelections && stageSelections.length > 0) {
         for (const sel of stageSelections) {
           const opt = stageOptionsMap.get(sel.optionId);
@@ -283,7 +303,9 @@ export class OrderService {
         throw new AppError(`Only ${availableStock} left of "${displayName}"`, 400);
       }
 
-      const price = Number(variant ? variant.price : product.price);
+      const price = stage1Option?.priceOverride != null
+        ? Number(stage1Option.priceOverride)
+        : Number(variant ? variant.price : product.price);
       const lineTotal = Math.round(price * input.quantity * 100) / 100;
       subtotal = Math.round((subtotal + lineTotal) * 100) / 100;
 
