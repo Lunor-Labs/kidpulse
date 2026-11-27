@@ -106,6 +106,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           productId: product.id,
           variantId: selectedVariant?.id ?? null,
           variantLabel: selectedVariant?.label ?? null,
+          stage1OptionId: null,
           stageSelections: null,
           name: product.name,
           price: activePrice,
